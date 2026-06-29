@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: studio-ana-dias-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: WHATSAPP_SIMULATION
+        value: "true"
+      - key: GOOGLE_CALENDAR_SIMULATION
+        value: "true"
