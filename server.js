@@ -88,10 +88,9 @@ app.post('/api/webhook/agendamento', async (req, res) => {
     );
 
     await db.addLog('success', `[Agenda] Horário reservado e agendamento ID #${novoAgendamento.id} gravado no banco.`);
-
     // 5. Disparar Mensagem de Boas-vindas/Confirmação no WhatsApp
     let whatsappEnviado = false;
-    if (process.env.WHATSAPP_SIMULATION === 'true') {
+    if (process.env.WHATSAPP_SIMULATION !== 'false') {
       const msgWhatsApp = `Olá, ${nome}! ✨ Seu agendamento para *${servico_nome}* no dia *${data}* às *${hora}* foi confirmado com sucesso no Studio Ana Dias. Já recebemos o seu Pix de sinal de 20%. Aguardamos você! 🌸`;
       await db.addLog('success', `[WhatsApp] Mensagem de boas-vindas enviada para +${telefone}. Conteúdo: "${msgWhatsApp}"`);
       whatsappEnviado = true;
@@ -99,7 +98,7 @@ app.post('/api/webhook/agendamento', async (req, res) => {
 
     // 6. Adicionar Evento ao Google Calendar
     let calendarAdicionado = false;
-    if (process.env.GOOGLE_CALENDAR_SIMULATION === 'true') {
+    if (process.env.GOOGLE_CALENDAR_SIMULATION !== 'false') {
       await db.addLog('success', `[Google Calendar] Evento adicionado: "Studio Ana Dias - ${servico_nome} (${nome})" em ${data}T${hora}:00.`);
       calendarAdicionado = true;
     }
