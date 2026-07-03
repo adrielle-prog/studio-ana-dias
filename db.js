@@ -251,6 +251,14 @@ const dbHelpers = {
     return dbRun('DELETE FROM portfolio WHERE id = ?', [id]);
   },
 
+  // Slots ocupados (para o calendário semanal)
+  getBookedSlots: (startDate, endDate) => {
+    return dbAll(
+      'SELECT data, hora FROM agendamentos WHERE data >= ? AND data <= ? ORDER BY data, hora',
+      [startDate, endDate]
+    );
+  },
+
   // Estatísticas
   getStats: async () => {
     const totalAppointments = await dbGet('SELECT COUNT(*) as count FROM agendamentos');

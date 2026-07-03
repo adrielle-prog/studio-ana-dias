@@ -825,3 +825,252 @@ input:focus, select:focus, textarea:focus {
 .hidden {
   display: none !important;
 }
+
+/* ──────────────────────────────────────────────────────────
+   MODAL WIDE (calendário)
+────────────────────────────────────────────────────────── */
+.modal-card.wide {
+  max-width: 760px;
+}
+
+/* Ícones coloridos */
+.icon-green  { color: var(--green);  }
+.icon-purple { color: var(--purple); }
+
+/* ──────────────────────────────────────────────────────────
+   CALENDÁRIO SEMANAL
+────────────────────────────────────────────────────────── */
+
+/* Navegação de semanas */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+}
+
+.cal-week-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  text-align: center;
+  flex: 1;
+}
+
+.cal-nav-btn {
+  background: rgba(157,78,221,0.12);
+  border: 1px solid rgba(157,78,221,0.25);
+  color: var(--purple);
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.cal-nav-btn i { width: 15px; height: 15px; }
+.cal-nav-btn:hover:not(:disabled) { background: var(--purple); color: #fff; }
+.cal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Aviso semana cheia */
+.cal-full-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255,189,46,0.1);
+  border: 1px solid rgba(255,189,46,0.25);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  color: #ffd166;
+  margin-bottom: 1rem;
+}
+.cal-full-notice i { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* Spinner de carregamento */
+.cal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.cal-spinner {
+  width: 28px; height: 28px;
+  border: 3px solid rgba(157,78,221,0.2);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Grade de colunas por dia */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .cal-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 360px) {
+  .cal-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cal-day-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cal-day-col.cal-day-past .cal-day-header {
+  opacity: 0.35;
+}
+
+/* Cabeçalho de cada dia */
+.cal-day-header {
+  text-align: center;
+  padding: 0.4rem 0.2rem;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.cal-weekday {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cal-daynum {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.1rem;
+}
+
+/* Container de slots */
+.cal-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* Botão de horário */
+.cal-slot {
+  width: 100%;
+  padding: 0.42rem 0.1rem;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: var(--transition);
+  text-align: center;
+  line-height: 1;
+}
+
+/* Disponível */
+.slot-free {
+  background: rgba(0, 245, 212, 0.1);
+  border-color: rgba(0, 245, 212, 0.25);
+  color: #00e5b8;
+}
+.slot-free:hover {
+  background: rgba(0, 245, 212, 0.22);
+  border-color: var(--green);
+  transform: scale(1.04);
+}
+
+/* Selecionado */
+.slot-selected {
+  background: var(--purple) !important;
+  border-color: var(--purple) !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(157,78,221,0.5);
+  transform: scale(1.04);
+}
+
+/* Ocupado */
+.slot-taken {
+  background: rgba(255, 92, 92, 0.08);
+  border-color: rgba(255, 92, 92, 0.2);
+  color: rgba(255, 92, 92, 0.45);
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* Passado / fora de horário */
+.slot-past {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.15);
+  cursor: not-allowed;
+}
+
+/* Erro de carregamento */
+.cal-error {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--red);
+  padding: 1.5rem;
+  font-size: 0.85rem;
+}
+
+/* Caixa de confirmação do slot selecionado */
+.cal-selection-box {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: rgba(157,78,221,0.1);
+  border: 1px solid rgba(157,78,221,0.3);
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+  animation: fadeIn 0.3s ease;
+  flex-wrap: wrap;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.cal-selection-box i { width: 20px; height: 20px; flex-shrink: 0; }
+
+.cal-selection-box span {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  min-width: 180px;
+}
+
+.cal-confirm-btn {
+  padding: 0.55rem 1.1rem !important;
+  font-size: 0.82rem !important;
+  white-space: nowrap;
+}
+
+/* Loading spinner dos serviços */
+.loading-spinner {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem;
+  font-size: 0.85rem;
+}

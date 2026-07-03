@@ -65,6 +65,119 @@ app.get('/api/admin/verify', authenticateAdmin, (req, res) => {
   res.json({ valid: true });
 });
 
+// ── Endpoint público: Slots disponíveis por semana ───────────────────────────
+// Horário de funcionamento (pode ser ajustado no futuro via painel)
+const HORARIOS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+const DIAS_SEMANA_TRABALHO = [1, 2, 3, 4, 5, 6]; // Seg a Sáb (0=Dom)
+
+/**
+ * GET /api/slots?week_start=YYYY-MM-DD
+ * Retorna os horários disponíveis e ocupados para cada dia da semana dada.
+ * Se week_start não for informado, usa a semana atual.
+ * Se a semana estiver completamente cheia, sugere a próxima semana disponível.
+ */
+app.get('/api/slots', async (req, res) => {
+  try {
+    // Montar datas da semana requisitada
+    let weekStart;
+    if (req.query.week_start) {
+      weekStart = new Date(req.query.week_start + 'T00:00:00');
+    } else {
+      weekStart = new Date();
+      weekStart.setHours(0, 0, 0, 0);
+    }
+
+    // Garantir que começa na segunda-feira da semana
+    const dayOfWeek = weekStart.getDay();
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    weekStart.setDate(weekStart.getDate() + diffToMonday);
+
+    // Gerar os 6 dias (Seg-Sáb)
+    const weekDays = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      const iso = d.toISOString().split('T')[0];
+      weekDays.push({ date: iso, dateObj: d });
+    }
+
+    // Buscar agendamentos da semana toda de uma vez
+    const startStr = weekDays[0].date;
+    const endStr   = weekDays[weekDays.length - 1].date;
+    const booked = await db.getBookedSlots(startStr, endStr);
+
+    // Construir set de ocupados: "YYYY-MM-DD|HH:MM"
+    const bookedSet = new Set(booked.map(b => `${b.data}|${b.hora}`));
+
+    // Construir resposta por dia
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let totalAvailable = 0;
+    const days = weekDays.map(({ date, dateObj }) => {
+      const isPast = dateObj < today;
+      const isToday = dateObj.getTime() === today.getTime();
+
+      const slots = HORARIOS.map(hora => {
+        const key = `${date}|${hora}`;
+        const isBooked = bookedSet.has(key);
+
+        // Para o dia atual, bloquear horários que já passaram
+        let isPastSlot = false;
+        if (isToday) {
+          const [h, m] = hora.split(':').map(Number);
+          const slotTime = new Date();
+          slotTime.setHours(h, m, 0, 0);
+          isPastSlot = slotTime <= new Date();
+        }
+
+        const available = !isPast && !isBooked && !isPastSlot;
+        if (available) totalAvailable++;
+
+        return { hora, available, booked: isBooked };
+      });
+
+      return {
+        date,
+        label: dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+        weekday: dateObj.toLocaleDateString('pt-BR', { weekday: 'long' }),
+        isPast,
+        slots
+      };
+    });
+
+    // Se a semana estiver totalmente esgotada, calcular a próxima semana disponível
+    let nextAvailableWeek = null;
+    if (totalAvailable === 0) {
+      const next = new Date(weekStart);
+      next.setDate(next.getDate() + 7);
+      nextAvailableWeek = next.toISOString().split('T')[0];
+    }
+
+    // Datas de navegação
+    const prevWeek = new Date(weekStart);
+    prevWeek.setDate(prevWeek.getDate() - 7);
+
+    const nextWeek = new Date(weekStart);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
+    res.json({
+      week_start: weekStart.toISOString().split('T')[0],
+      prev_week:  prevWeek.toISOString().split('T')[0],
+      next_week:  nextWeek.toISOString().split('T')[0],
+      total_available: totalAvailable,
+      next_available_week: nextAvailableWeek,
+      days
+    });
+
+  } catch (err) {
+    console.error('Erro em /api/slots:', err);
+    res.status(500).json({ error: 'Erro ao buscar horários disponíveis.' });
+  }
+});
+
+
+
 // ── Webhook Endpoint de Automação ──────────────────────────────────────────────
 app.post('/api/webhook/agendamento', async (req, res) => {
   const { cliente, agendamento, metadados } = req.body;

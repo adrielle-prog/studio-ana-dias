@@ -4,19 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Studio Ana Dias - Agendamento e Beleza</title>
-  <!-- Google Fonts: Outfit & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="style.css">
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="glass-bg"></div>
 
-  <!-- Header/Navbar -->
+  <!-- Navbar -->
   <header class="app-header client-nav">
     <div class="logo-container">
       <div class="logo-circle">AD</div>
@@ -28,39 +25,32 @@
     <div class="nav-links">
       <a href="#portfolio">Portfólio</a>
       <a href="#servicos" class="nav-btn-highlight">Ver Serviços</a>
-      <a href="/admin" class="nav-admin-link"><i data-lucide="lock" style="width: 14px; display: inline; vertical-align: middle;"></i> Admin</a>
+      <a href="/admin" class="nav-admin-link"><i data-lucide="lock" style="width:14px;display:inline;vertical-align:middle;"></i> Admin</a>
     </div>
   </header>
 
   <div class="app-container">
-    
-    <!-- Hero Section -->
+
+    <!-- Hero -->
     <section class="hero-section">
       <div class="hero-content">
-        <span class="hero-badge">🌸 Beleza & Estilo</span>
+        <span class="hero-badge">🌸 Beleza &amp; Estilo</span>
         <h2>Sinta-se única, sinta-se radiante.</h2>
         <p>Agende seu horário com pagamento antecipado simplificado via Pix. Procedimentos modernos de cílios, sobrancelhas e estética geral.</p>
-        <a href="#servicos" class="btn-hero">
-          <i data-lucide="calendar"></i> Agendar Agora
-        </a>
+        <a href="#servicos" class="btn-hero"><i data-lucide="calendar"></i> Agendar Agora</a>
       </div>
       <div class="hero-visual">
         <div class="visual-glow-circle"></div>
         <div class="visual-card">
           <div class="visual-header">
-            <span class="dot-red"></span>
-            <span class="dot-yellow"></span>
-            <span class="dot-green"></span>
+            <span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span>
           </div>
           <div class="visual-body">
             <div class="client-testimonial">
               <p>"O melhor design de sobrancelha que já fiz na vida! Atendimento impecável e agendamento super rápido."</p>
               <div class="testimonial-author">
                 <div class="author-avatar">M</div>
-                <div>
-                  <strong>Mariana Souza</strong>
-                  <span>Cliente Recorrente</span>
-                </div>
+                <div><strong>Mariana Souza</strong><span>Cliente Recorrente</span></div>
               </div>
             </div>
           </div>
@@ -68,19 +58,17 @@
       </div>
     </section>
 
-    <!-- Portfolio Section (Antes & Depois) -->
+    <!-- Portfolio Antes & Depois -->
     <section id="portfolio" class="client-section">
       <div class="section-title-container">
-        <h2>Antes & Depois</h2>
+        <h2>Antes &amp; Depois</h2>
         <p>Veja os resultados reais de nossas clientes e apaixone-se pelo processo.</p>
       </div>
-
       <div class="portfolio-slider-container" id="portfolio-list">
-        <!-- Inserido dinamicamente -->
         <div class="portfolio-placeholder">
           <div class="compare-container">
-            <div class="compare-img compare-before" style="background-image: url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=600');"></div>
-            <div class="compare-img compare-after" style="background-image: url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=600');"></div>
+            <div class="compare-img compare-before" style="background-image:url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=600');"></div>
+            <div class="compare-img compare-after"  style="background-image:url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=600');"></div>
             <div class="compare-slider"></div>
           </div>
           <span class="portfolio-title-tag">Extensão de Cílios Clássica</span>
@@ -88,75 +76,103 @@
       </div>
     </section>
 
-    <!-- Services Catalog Section -->
+    <!-- Serviços -->
     <section id="servicos" class="client-section">
       <div class="section-title-container">
         <h2>Nossos Serviços</h2>
         <p>Selecione o procedimento ideal para você e reserve seu horário.</p>
       </div>
-
       <div class="services-grid" id="services-container">
-        <!-- Carregado dinamicamente -->
         <div class="loading-spinner">Carregando serviços...</div>
       </div>
     </section>
 
-  </div>
+  </div><!-- /app-container -->
 
-  <!-- Booking/Pix Modal -->
+  <!-- ──────────── MODAL ──────────── -->
   <div class="modal-overlay hidden" id="booking-modal">
-    <div class="modal-card">
-      <div class="modal-close" id="btn-close-modal">
-        <i data-lucide="x"></i>
+    <div class="modal-card wide">
+      <div class="modal-close" id="btn-close-modal"><i data-lucide="x"></i></div>
+
+      <!-- STEP 0: Calendário Semanal -->
+      <div class="modal-step" id="step-calendar">
+        <h3>Escolha o Dia e Horário</h3>
+        <p class="modal-sub">Serviço: <strong id="cal-service-name">—</strong></p>
+
+        <!-- Navegação de semanas -->
+        <div class="cal-nav">
+          <button class="cal-nav-btn" id="cal-prev-week" disabled>
+            <i data-lucide="chevron-left"></i>
+          </button>
+          <span class="cal-week-label" id="cal-week-label">Carregando...</span>
+          <button class="cal-nav-btn" id="cal-next-week">
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </div>
+
+        <!-- Aviso semana cheia -->
+        <div class="cal-full-notice hidden" id="cal-full-notice">
+          <i data-lucide="calendar-x"></i>
+          <span>Essa semana está completamente cheia. Carregando a próxima semana disponível...</span>
+        </div>
+
+        <!-- Grade de dias -->
+        <div class="cal-loading hidden" id="cal-loading">
+          <div class="cal-spinner"></div>
+          <span>Verificando disponibilidade...</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"><!-- preenchido pelo JS --></div>
+
+        <!-- Seleção atual -->
+        <div class="cal-selection-box hidden" id="cal-selection-box">
+          <i data-lucide="check-circle-2" class="icon-green"></i>
+          <span>Selecionado: <strong id="cal-selected-label">—</strong></span>
+          <button class="btn-submit cal-confirm-btn" id="btn-cal-confirm">
+            Continuar <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
       </div>
-      
-      <!-- Modal Step 1: Form -->
-      <div class="modal-step" id="step-form">
-        <h3>Confirmar Agendamento</h3>
-        <p class="modal-sub">Insira seus dados para reservar o serviço: <strong id="selected-service-name">Cílios</strong></p>
-        
+
+      <!-- STEP 1: Dados da Cliente -->
+      <div class="modal-step hidden" id="step-form">
+        <h3>Seus Dados</h3>
+        <p class="modal-sub">Serviço: <strong id="selected-service-name">—</strong> &nbsp;·&nbsp; <strong id="selected-slot-label">—</strong></p>
+
         <form id="client-booking-form">
           <div class="input-group">
-            <label for="client-name">Seu Nome Completo</label>
+            <label for="client-name">Nome Completo</label>
             <input type="text" id="client-name" placeholder="Ex: Patrícia Lima" required>
           </div>
           <div class="grid-2">
             <div class="input-group">
-              <label for="client-phone">Seu WhatsApp</label>
+              <label for="client-phone">WhatsApp</label>
               <input type="tel" id="client-phone" placeholder="Ex: 11999998888" required>
             </div>
             <div class="input-group">
-              <label for="client-email">Seu E-mail (Opcional)</label>
+              <label for="client-email">E-mail (Opcional)</label>
               <input type="email" id="client-email" placeholder="Ex: patricia@email.com">
             </div>
           </div>
-          <div class="grid-2">
-            <div class="input-group">
-              <label for="booking-date">Data Desejada</label>
-              <input type="date" id="booking-date" required>
-            </div>
-            <div class="input-group">
-              <label for="booking-hour">Horário</label>
-              <input type="time" id="booking-hour" required>
-            </div>
-          </div>
-
           <div class="booking-notice">
             <i data-lucide="shield-check"></i>
             <span>Para confirmar, é necessário o pagamento de um sinal de <strong>20% via Pix</strong>.</span>
           </div>
-
-          <button type="submit" class="btn-submit">
-            Avançar para o Pagamento (Pix) <i data-lucide="arrow-right"></i>
-          </button>
+          <div class="grid-2">
+            <button type="button" class="btn-cancel" id="btn-back-to-cal">
+              <i data-lucide="chevron-left"></i> Voltar
+            </button>
+            <button type="submit" class="btn-submit">
+              Avançar para o Pix <i data-lucide="arrow-right"></i>
+            </button>
+          </div>
         </form>
       </div>
 
-      <!-- Modal Step 2: Pix Payment -->
+      <!-- STEP 2: Pix -->
       <div class="modal-step hidden" id="step-pix">
         <h3>Pagamento de Sinal via Pix</h3>
         <p class="modal-sub">Realize o pagamento de <strong id="pix-value">R$ 0,00</strong> (20%) para garantir sua vaga.</p>
-        
+
         <div class="pix-payment-box">
           <div class="pix-qr-container">
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020101021226830014br.gov.bcb.pix2561pix.render.com/studio-ana-dias520400005303986540524.005802BR5915StudioAnaDias6009SaoPaulo62070503001" alt="Pix QR Code">
@@ -172,7 +188,7 @@
 
         <div class="booking-notice warning">
           <i data-lucide="alert-triangle"></i>
-          <span>O agendamento só será registrado no banco após clicar no botão abaixo para confirmar o Pix.</span>
+          <span>O agendamento só é confirmado após clicar no botão abaixo.</span>
         </div>
 
         <div class="grid-2">
@@ -183,215 +199,270 @@
         </div>
       </div>
 
-      <!-- Modal Step 3: Success Confirmation -->
+      <!-- STEP 3: Sucesso -->
       <div class="modal-step hidden" id="step-success">
         <div class="success-header">
-          <div class="success-icon-circle">
-            <i data-lucide="check"></i>
-          </div>
+          <div class="success-icon-circle"><i data-lucide="check"></i></div>
           <h3>Agendamento Confirmado!</h3>
           <p>Seu horário foi bloqueado com sucesso.</p>
         </div>
-
         <div class="success-summary-box">
-          <div class="summary-row">
-            <span>Serviço:</span>
-            <strong id="sum-service">Cílios</strong>
-          </div>
-          <div class="summary-row">
-            <span>Data e Hora:</span>
-            <strong id="sum-datetime">12/07/2026 às 14:00</strong>
-          </div>
-          <div class="summary-row">
-            <span>Status Pix (Sinal):</span>
-            <span class="pix-badge pago">Pago</span>
-          </div>
+          <div class="summary-row"><span>Serviço:</span><strong id="sum-service">—</strong></div>
+          <div class="summary-row"><span>Data e Hora:</span><strong id="sum-datetime">—</strong></div>
+          <div class="summary-row"><span>Status Pix (Sinal):</span><span class="pix-badge pago">Pago</span></div>
         </div>
-
         <div class="success-channels">
           <div class="channel-item">
             <i data-lucide="message-square" class="icon-green"></i>
-            <div>
-              <strong>WhatsApp Confirmado</strong>
-              <span>Mensagem de boas-vindas enviada!</span>
-            </div>
+            <div><strong>WhatsApp Confirmado</strong><span>Mensagem de boas-vindas enviada!</span></div>
           </div>
           <div class="channel-item">
             <i data-lucide="calendar" class="icon-purple"></i>
-            <div>
-              <strong>Google Calendar</strong>
-              <span>Evento adicionado na nossa agenda.</span>
-            </div>
+            <div><strong>Google Calendar</strong><span>Evento adicionado na nossa agenda.</span></div>
           </div>
         </div>
-
         <button class="btn-submit" id="btn-finish-booking">Entendido</button>
       </div>
 
     </div>
-  </div>
+  </div><!-- /modal -->
 
   <script>
-    // Inicializar Ícones
     lucide.createIcons();
 
-    let selectedService = null;
-    let servicesList = [];
+    let selectedService  = null;
+    let servicesList     = [];
+    let selectedDate     = null; // 'YYYY-MM-DD'
+    let selectedHora     = null; // 'HH:MM'
+    let currentWeekStart = null; // 'YYYY-MM-DD'
 
-    // Carregar Serviços Dinamicamente
+    // ── Serviços ──────────────────────────────────────────────────────────
     async function fetchServices() {
       try {
-        const res = await fetch('/api/servicos');
-        const services = await res.json();
-        servicesList = services;
-        
+        const res      = await fetch('/api/servicos');
+        servicesList   = await res.json();
         const container = document.getElementById('services-container');
         container.innerHTML = '';
-
-        if (services.length === 0) {
-          container.innerHTML = '<p class="text-muted">Nenhum serviço disponível no momento.</p>';
+        if (!servicesList.length) {
+          container.innerHTML = '<p class="text-muted">Nenhum serviço disponível.</p>';
           return;
         }
-
-        services.forEach(s => {
-          const card = document.createElement('div');
-          card.className = 'service-card-client';
-          
-          // Imagem padrão caso não possua
+        servicesList.forEach(s => {
           const imgSrc = s.imagem || 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=400';
-
+          const card   = document.createElement('div');
+          card.className = 'service-card-client';
           card.innerHTML = `
-            <div class="service-img" style="background-image: url('${imgSrc}');"></div>
+            <div class="service-img" style="background-image:url('${imgSrc}');"></div>
             <div class="service-details">
-              <h3>${escapeHtml(s.nome)}</h3>
-              <p class="service-desc">${escapeHtml(s.descricao || 'Sem descrição.')}</p>
+              <h3>${esc(s.nome)}</h3>
+              <p class="service-desc">${esc(s.descricao || 'Sem descrição.')}</p>
               <div class="service-meta">
                 <span class="duration"><i data-lucide="clock"></i> ${s.duracao_min} min</span>
                 <span class="price">R$ ${s.preco.toFixed(2)}</span>
               </div>
-              <button class="btn-book-service" onclick="openBookingModal(${s.id})">
-                Reservar Horário
-              </button>
-            </div>
-          `;
+              <button class="btn-book-service" onclick="openBookingModal(${s.id})">Reservar Horário</button>
+            </div>`;
           container.appendChild(card);
         });
         lucide.createIcons();
-      } catch (err) {
-        console.error('Erro ao buscar serviços:', err);
-      }
+      } catch (e) { console.error(e); }
     }
 
-    // Carregar Portfólio Dinamicamente
+    // ── Portfólio Antes/Depois ────────────────────────────────────────────
     async function fetchPortfolio() {
       try {
-        const res = await fetch('/api/portfolio');
-        const portfolio = await res.json();
-        
+        const res  = await fetch('/api/portfolio');
+        const list = await res.json();
+        if (!list.length) return;
         const container = document.getElementById('portfolio-list');
-        if (portfolio.length > 0) {
-          container.innerHTML = '';
-          portfolio.forEach(item => {
-            const slide = document.createElement('div');
-            slide.className = 'portfolio-slide';
-            
-            slide.innerHTML = `
-              <div class="compare-container">
-                <div class="compare-img compare-before" style="background-image: url('${item.imagem_antes}');"></div>
-                <div class="compare-img compare-after" style="background-image: url('${item.imagem_depois}');"></div>
-                <div class="compare-slider"></div>
-              </div>
-              <span class="portfolio-title-tag">${escapeHtml(item.titulo)}</span>
-            `;
-            container.appendChild(slide);
-          });
-          setupBeforeAfterSliders();
-        }
-      } catch (err) {
-        console.error('Erro ao buscar portfólio:', err);
-      }
+        container.innerHTML = '';
+        list.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'portfolio-slide';
+          div.innerHTML = `
+            <div class="compare-container">
+              <div class="compare-img compare-before" style="background-image:url('${item.imagem_antes}');"></div>
+              <div class="compare-img compare-after"  style="background-image:url('${item.imagem_depois}');"></div>
+              <div class="compare-slider"></div>
+            </div>
+            <span class="portfolio-title-tag">${esc(item.titulo)}</span>`;
+          container.appendChild(div);
+        });
+        setupBeforeAfterSliders();
+      } catch (e) { console.error(e); }
     }
 
-    // Lógica do Slider Antes/Depois
     function setupBeforeAfterSliders() {
-      const containers = document.querySelectorAll('.compare-container');
-      containers.forEach(container => {
-        const afterImg = container.querySelector('.compare-after');
-        const sliderBar = container.querySelector('.compare-slider');
-        
-        // Estado inicial
-        let isDragging = false;
-        
+      document.querySelectorAll('.compare-container').forEach(container => {
+        const after  = container.querySelector('.compare-after');
+        const slider = container.querySelector('.compare-slider');
+        let drag = false;
         function move(x) {
-          const rect = container.getBoundingClientRect();
-          let position = ((x - rect.left) / rect.width) * 100;
-          if (position < 0) position = 0;
-          if (position > 100) position = 100;
-          
-          afterImg.style.clipPath = `polygon(${position}% 0, 100% 0, 100% 100%, ${position}% 100%)`;
-          sliderBar.style.left = `${position}%`;
+          const r = container.getBoundingClientRect();
+          let p = Math.min(100, Math.max(0, ((x - r.left) / r.width) * 100));
+          after.style.clipPath = `polygon(${p}% 0,100% 0,100% 100%,${p}% 100%)`;
+          slider.style.left = p + '%';
         }
-
-        // Eventos mouse
-        container.addEventListener('mousedown', () => isDragging = true);
-        window.addEventListener('mouseup', () => isDragging = false);
-        container.addEventListener('mousemove', (e) => {
-          if (!isDragging) return;
-          move(e.clientX);
-        });
-
-        // Eventos touch para mobile
-        container.addEventListener('touchstart', () => isDragging = true);
-        window.addEventListener('touchend', () => isDragging = false);
-        container.addEventListener('touchmove', (e) => {
-          if (!isDragging) return;
-          move(e.touches[0].clientX);
-        });
+        container.addEventListener('mousedown',  () => drag = true);
+        window.addEventListener('mouseup',       () => drag = false);
+        container.addEventListener('mousemove',  e => { if (drag) move(e.clientX); });
+        container.addEventListener('touchstart', () => drag = true, { passive: true });
+        window.addEventListener('touchend',      () => drag = false);
+        container.addEventListener('touchmove',  e => { if (drag) move(e.touches[0].clientX); }, { passive: true });
       });
     }
 
-    // Fluxo de Agendamento Modal
+    // ── Calendário Semanal ────────────────────────────────────────────────
     function openBookingModal(serviceId) {
       selectedService = servicesList.find(s => s.id === serviceId);
       if (!selectedService) return;
-
-      document.getElementById('selected-service-name').innerText = selectedService.nome;
-      
-      // Definir data mínima como amanhã
-      const dateInput = document.getElementById('booking-date');
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dateInput.min = tomorrow.toISOString().split('T')[0];
-      dateInput.value = tomorrow.toISOString().split('T')[0];
-      document.getElementById('booking-hour').value = '14:00';
-
-      // Resetar passos
-      showStep('step-form');
-      
+      selectedDate = null;
+      selectedHora = null;
+      document.getElementById('cal-service-name').innerText  = selectedService.nome;
+      document.getElementById('cal-selection-box').classList.add('hidden');
+      document.getElementById('cal-full-notice').classList.add('hidden');
+      showStep('step-calendar');
       document.getElementById('booking-modal').classList.remove('hidden');
+      loadCalendar(null); // semana atual
     }
 
-    function showStep(stepId) {
-      document.querySelectorAll('.modal-step').forEach(step => step.classList.add('hidden'));
-      document.getElementById(stepId).classList.remove('hidden');
+    async function loadCalendar(weekStart) {
+      const grid    = document.getElementById('cal-grid');
+      const loading = document.getElementById('cal-loading');
+      const fullNotice = document.getElementById('cal-full-notice');
+
+      grid.innerHTML = '';
+      loading.classList.remove('hidden');
+      grid.classList.add('hidden');
+
+      try {
+        const qs  = weekStart ? `?week_start=${weekStart}` : '';
+        const res = await fetch(`/api/slots${qs}`);
+        const data = await res.json();
+
+        currentWeekStart = data.week_start;
+
+        // Atualizar label da semana
+        const ws  = new Date(data.week_start + 'T00:00:00');
+        const we  = new Date(ws); we.setDate(ws.getDate() + 5);
+        document.getElementById('cal-week-label').innerText =
+          `${ws.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${we.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}`;
+
+        // Botão voltar: desabilitar se for semana atual ou passada
+        const today = new Date(); today.setHours(0,0,0,0);
+        const prevDate = new Date(data.prev_week + 'T00:00:00');
+        document.getElementById('cal-prev-week').disabled = prevDate < today;
+
+        // Semana totalmente cheia → pular automaticamente para a próxima disponível
+        if (data.total_available === 0 && data.next_available_week) {
+          fullNotice.classList.remove('hidden');
+          setTimeout(() => {
+            fullNotice.classList.add('hidden');
+            loadCalendar(data.next_available_week);
+          }, 1800);
+          loading.classList.add('hidden');
+          grid.classList.remove('hidden');
+          return;
+        }
+
+        fullNotice.classList.add('hidden');
+
+        // Construir colunas por dia
+        grid.innerHTML = '';
+        data.days.forEach(day => {
+          const col = document.createElement('div');
+          col.className = 'cal-day-col' + (day.isPast ? ' cal-day-past' : '');
+
+          const [yyyy, mm, dd] = day.date.split('-');
+          const dayLabel = `${dd}/${mm}`;
+          const weekday  = day.weekday.charAt(0).toUpperCase() + day.weekday.slice(1);
+
+          col.innerHTML = `
+            <div class="cal-day-header">
+              <span class="cal-weekday">${weekday.substring(0,3)}</span>
+              <span class="cal-daynum">${dayLabel}</span>
+            </div>
+            <div class="cal-slots">
+              ${day.slots.map(slot => `
+                <button
+                  class="cal-slot ${slot.available ? 'slot-free' : (slot.booked ? 'slot-taken' : 'slot-past')}"
+                  data-date="${day.date}" data-hora="${slot.hora}"
+                  ${slot.available ? '' : 'disabled'}
+                  onclick="selectSlot('${day.date}','${slot.hora}','${dayLabel} (${weekday}) às ${slot.hora}')"
+                >
+                  ${slot.hora}
+                </button>`).join('')}
+            </div>`;
+          grid.appendChild(col);
+        });
+
+        // Restaurar seleção anterior, se ainda disponível
+        if (selectedDate && selectedHora) {
+          const btn = grid.querySelector(`[data-date="${selectedDate}"][data-hora="${selectedHora}"]`);
+          if (btn && btn.classList.contains('slot-free')) btn.classList.add('slot-selected');
+        }
+
+      } catch (e) {
+        grid.innerHTML = '<p class="cal-error">Erro ao carregar a agenda. Tente novamente.</p>';
+      } finally {
+        loading.classList.add('hidden');
+        grid.classList.remove('hidden');
+        lucide.createIcons();
+      }
     }
 
-    // Submissão do Step 1: Form
-    document.getElementById('client-booking-form').addEventListener('submit', (e) => {
+    function selectSlot(date, hora, label) {
+      selectedDate = date;
+      selectedHora = hora;
+
+      // Destaque visual
+      document.querySelectorAll('.cal-slot').forEach(b => b.classList.remove('slot-selected'));
+      const btn = document.querySelector(`[data-date="${date}"][data-hora="${hora}"]`);
+      if (btn) btn.classList.add('slot-selected');
+
+      // Exibir caixa de confirmação
+      document.getElementById('cal-selected-label').innerText = label;
+      const box = document.getElementById('cal-selection-box');
+      box.classList.remove('hidden');
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Navegação de semana
+    document.getElementById('cal-prev-week').addEventListener('click', () => {
+      const d = new Date(currentWeekStart + 'T00:00:00');
+      d.setDate(d.getDate() - 7);
+      loadCalendar(d.toISOString().split('T')[0]);
+    });
+
+    document.getElementById('cal-next-week').addEventListener('click', () => {
+      const d = new Date(currentWeekStart + 'T00:00:00');
+      d.setDate(d.getDate() + 7);
+      loadCalendar(d.toISOString().split('T')[0]);
+    });
+
+    // Confirmar horário → ir para dados
+    document.getElementById('btn-cal-confirm').addEventListener('click', () => {
+      if (!selectedDate || !selectedHora) return;
+      const [yyyy, mm, dd] = selectedDate.split('-');
+      document.getElementById('selected-service-name').innerText = selectedService.nome;
+      document.getElementById('selected-slot-label').innerText   = `${dd}/${mm}/${yyyy} às ${selectedHora}`;
+      showStep('step-form');
+    });
+
+    // Voltar do form para o calendário
+    document.getElementById('btn-back-to-cal').addEventListener('click', () => showStep('step-calendar'));
+
+    // ── Formulário → Pix ─────────────────────────────────────────────────
+    document.getElementById('client-booking-form').addEventListener('submit', e => {
       e.preventDefault();
-      
       const sinal = selectedService.preco * 0.20;
       document.getElementById('pix-value').innerText = `R$ ${sinal.toFixed(2)}`;
-      
       showStep('step-pix');
     });
 
-    // Voltar do Pix
-    document.getElementById('btn-back-pix').addEventListener('click', () => {
-      showStep('step-form');
-    });
+    document.getElementById('btn-back-pix').addEventListener('click', () => showStep('step-form'));
 
-    // Confirmar Pix e registrar agendamento
+    // ── Confirmar Pix → Webhook ───────────────────────────────────────────
     document.getElementById('btn-confirm-pix').addEventListener('click', async () => {
       const btn = document.getElementById('btn-confirm-pix');
       btn.disabled = true;
@@ -399,44 +470,39 @@
 
       const payload = {
         cliente: {
-          nome: document.getElementById('client-name').value,
+          nome:     document.getElementById('client-name').value,
           telefone: document.getElementById('client-phone').value,
-          email: document.getElementById('client-email').value
+          email:    document.getElementById('client-email').value
         },
         agendamento: {
           servico_id: selectedService.id.toString(),
-          data: document.getElementById('booking-date').value,
-          hora: document.getElementById('booking-hour').value,
-          status_pix: 'pago' // Simulando Pix pago
+          data:        selectedDate,
+          hora:        selectedHora,
+          status_pix: 'pago'
         },
         metadados: {
           origem_site: 'Landing Page Pública',
-          timestamp: new Date().toISOString()
+          timestamp:   new Date().toISOString()
         }
       };
 
       try {
-        const res = await fetch('/api/webhook/agendamento', {
+        const res    = await fetch('/api/webhook/agendamento', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
         const result = await res.json();
 
         if (res.ok) {
-          // Preencher Step 3 de Sucesso
-          document.getElementById('sum-service').innerText = selectedService.nome;
-          
-          const parts = payload.agendamento.data.split('-');
-          const dateBr = `${parts[2]}/${parts[1]}/${parts[0]}`;
-          document.getElementById('sum-datetime').innerText = `${dateBr} às ${payload.agendamento.hora}`;
-          
+          document.getElementById('sum-service').innerText  = selectedService.nome;
+          const [y, m, d] = selectedDate.split('-');
+          document.getElementById('sum-datetime').innerText = `${d}/${m}/${y} às ${selectedHora}`;
           showStep('step-success');
         } else {
           alert(result.error || 'Ocorreu um erro ao confirmar.');
         }
-      } catch (err) {
+      } catch {
         alert('Erro ao se conectar ao servidor.');
       } finally {
         btn.disabled = false;
@@ -445,41 +511,37 @@
       }
     });
 
-    // Botão Copiar Pix
+    // ── Copiar Pix ───────────────────────────────────────────────────────
     document.getElementById('btn-copy-pix').addEventListener('click', () => {
-      const copyText = document.getElementById('pix-copy-paste');
-      copyText.select();
-      copyText.setSelectionRange(0, 99999);
-      navigator.clipboard.writeText(copyText.value);
-      
-      const copyBtn = document.getElementById('btn-copy-pix');
-      copyBtn.innerHTML = '<i data-lucide="check"></i> Copiado!';
+      const el = document.getElementById('pix-copy-paste');
+      navigator.clipboard.writeText(el.value);
+      const btn = document.getElementById('btn-copy-pix');
+      btn.innerHTML = '<i data-lucide="check"></i> Copiado!';
       lucide.createIcons();
-      setTimeout(() => {
-        copyBtn.innerHTML = '<i data-lucide="copy"></i> Copiar Código';
-        lucide.createIcons();
-      }, 2000);
+      setTimeout(() => { btn.innerHTML = '<i data-lucide="copy"></i> Copiar Código'; lucide.createIcons(); }, 2000);
     });
 
-    // Fechar Modal
-    document.getElementById('btn-close-modal').addEventListener('click', () => {
-      document.getElementById('booking-modal').classList.add('hidden');
-    });
+    // ── Fechar modal ──────────────────────────────────────────────────────
+    document.getElementById('btn-close-modal').addEventListener('click', () =>
+      document.getElementById('booking-modal').classList.add('hidden'));
+    document.getElementById('btn-finish-booking').addEventListener('click', () =>
+      document.getElementById('booking-modal').classList.add('hidden'));
 
-    document.getElementById('btn-finish-booking').addEventListener('click', () => {
-      document.getElementById('booking-modal').classList.add('hidden');
-    });
-
-    // Utilitários
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    // ── Helpers ───────────────────────────────────────────────────────────
+    function showStep(id) {
+      document.querySelectorAll('.modal-step').forEach(s => s.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
     }
 
-    // Inicialização
+    function esc(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────────────
     fetchServices();
     fetchPortfolio();
-    setTimeout(setupBeforeAfterSliders, 1000);
+    setTimeout(setupBeforeAfterSliders, 800);
   </script>
 </body>
 </html>
