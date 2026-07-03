@@ -711,3 +711,36 @@ textarea { resize: vertical; min-height: 80px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* Checkbox Label styles */
+.chk-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.chk-label:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+.chk-label input[type="checkbox"] {
+  accent-color: var(--purple);
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+

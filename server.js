@@ -66,18 +66,27 @@ app.get('/api/admin/verify', authenticateAdmin, (req, res) => {
 });
 
 // ── Endpoint público: Slots disponíveis por semana ───────────────────────────
-// Horário de funcionamento (pode ser ajustado no futuro via painel)
-const HORARIOS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
-const DIAS_SEMANA_TRABALHO = [1, 2, 3, 4, 5, 6]; // Seg a Sáb (0=Dom)
-
-/**
- * GET /api/slots?week_start=YYYY-MM-DD
- * Retorna os horários disponíveis e ocupados para cada dia da semana dada.
- * Se week_start não for informado, usa a semana atual.
- * Se a semana estiver completamente cheia, sugere a próxima semana disponível.
- */
 app.get('/api/slots', async (req, res) => {
   try {
+    // 1. Carregar configurações e folgas
+    const configHorarios = await db.getConfig('horarios_trabalho');
+    const configDias = await db.getConfig('dias_trabalho');
+    const listFolgas = await db.getFolgas();
+
+    const horariosDisponiveis = configHorarios ? JSON.parse(configHorarios.valor) : ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+    const diasTrabalho = configDias ? JSON.parse(configDias.valor) : [1,2,3,4,5,6]; // default Seg a Sáb
+
+    // Criar Sets e Mapas para busca rápida de folgas
+    const folgasDatas = new Set();
+    const folgasDiasSemana = new Set();
+    listFolgas.forEach(f => {
+      if (f.tipo === 'data' && f.data) {
+        folgasDatas.add(f.data);
+      } else if (f.tipo === 'dia_semana' && f.dia_semana !== null) {
+        folgasDiasSemana.add(Number(f.dia_semana));
+      }
+    });
+
     // Montar datas da semana requisitada
     let weekStart;
     if (req.query.week_start) {
@@ -117,8 +126,12 @@ app.get('/api/slots', async (req, res) => {
     const days = weekDays.map(({ date, dateObj }) => {
       const isPast = dateObj < today;
       const isToday = dateObj.getTime() === today.getTime();
+      const currentDayOfWeek = dateObj.getDay();
 
-      const slots = HORARIOS.map(hora => {
+      // Verificar se é folga recorrente ou pontual
+      const isFolga = folgasDatas.has(date) || folgasDiasSemana.has(currentDayOfWeek) || !diasTrabalho.includes(currentDayOfWeek);
+
+      const slots = horariosDisponiveis.map(hora => {
         const key = `${date}|${hora}`;
         const isBooked = bookedSet.has(key);
 
@@ -131,7 +144,7 @@ app.get('/api/slots', async (req, res) => {
           isPastSlot = slotTime <= new Date();
         }
 
-        const available = !isPast && !isBooked && !isPastSlot;
+        const available = !isPast && !isBooked && !isPastSlot && !isFolga;
         if (available) totalAvailable++;
 
         return { hora, available, booked: isBooked };
@@ -142,6 +155,7 @@ app.get('/api/slots', async (req, res) => {
         label: dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
         weekday: dateObj.toLocaleDateString('pt-BR', { weekday: 'long' }),
         isPast,
+        isFolga,
         slots
       };
     });
@@ -175,6 +189,7 @@ app.get('/api/slots', async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar horários disponíveis.' });
   }
 });
+
 
 
 
@@ -413,6 +428,63 @@ app.get('/api/stats', authenticateAdmin, async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar estatísticas.' });
+  }
+});
+// ── Folgas e Feriados Endpoints ───────────────────────────────────────────
+app.get('/api/folgas', async (req, res) => {
+  try {
+    const data = await db.getFolgas();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar folgas.' });
+  }
+});
+
+app.post('/api/folgas', authenticateAdmin, async (req, res) => {
+  try {
+    const { tipo, data, dia_semana, descricao } = req.body;
+    if (!tipo || !descricao) {
+      return res.status(400).json({ error: 'Tipo e descrição são obrigatórios.' });
+    }
+    const novaFolga = await db.createFolga(tipo, data, dia_semana, descricao);
+    await db.addLog('info', `[Admin] Nova folga cadastrada: "${descricao}" (${tipo})`);
+    res.status(201).json(novaFolga);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao cadastrar folga.' });
+  }
+});
+
+app.delete('/api/folgas/:id', authenticateAdmin, async (req, res) => {
+  try {
+    await db.deleteFolga(Number(req.params.id));
+    await db.addLog('info', `[Admin] Folga ID #${req.params.id} removida.`);
+    res.json({ message: 'Folga removida com sucesso.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao remover folga.' });
+  }
+});
+
+// ── Configurações Endpoints ──────────────────────────────────────────────────
+app.get('/api/configuracoes', async (req, res) => {
+  try {
+    const data = await db.getAllConfigs();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar configurações.' });
+  }
+});
+
+app.post('/api/configuracoes', authenticateAdmin, async (req, res) => {
+  try {
+    const { chave, valor } = req.body;
+    if (!chave || !valor) {
+      return res.status(400).json({ error: 'Chave e valor são obrigatórios.' });
+    }
+    await db.setConfig(chave, valor);
+    await db.addLog('info', `[Admin] Configuração atualizada: ${chave}`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao salvar configuração.' });
   }
 });
 

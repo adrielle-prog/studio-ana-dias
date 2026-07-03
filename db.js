@@ -105,9 +105,29 @@ async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS portfolio (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         titulo TEXT NOT NULL,
-        imagem_antes TEXT NOT NULL, -- link ou base64
-        imagem_depois TEXT NOT NULL, -- link ou base64
+        imagem_antes TEXT NOT NULL,
+        imagem_depois TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tabela de folgas e feriados
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS folgas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipo TEXT NOT NULL CHECK(tipo IN ('data','dia_semana')),
+        data TEXT,          -- YYYY-MM-DD  (usado quando tipo='data')
+        dia_semana INTEGER, -- 0=Dom ... 6=Sáb (usado quando tipo='dia_semana')
+        descricao TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tabela de configurações gerais (chave/valor)
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS configuracoes (
+        chave TEXT PRIMARY KEY,
+        valor TEXT NOT NULL
       )
     `);
 
@@ -134,6 +154,25 @@ async function initializeDatabase() {
         await dbRun('INSERT INTO servicos (nome, preco, duracao_min, descricao) VALUES (?, ?, ?, ?)', s);
       }
       console.log('Seed: Serviços padrão criados.');
+    }
+
+    // Seed configurações padrão
+    const defaultConfigs = [
+      ['horarios_trabalho', JSON.stringify(['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'])],
+      ['dias_trabalho',     JSON.stringify([1,2,3,4,5,6])],  // Seg(1) a Sáb(6)
+    ];
+    for (const [chave, valor] of defaultConfigs) {
+      await dbRun('INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)', [chave, valor]);
+    }
+
+    // Seed: domingo como folga recorrente (se não existir)
+    const folgaCount = await dbGet('SELECT COUNT(*) as count FROM folgas WHERE tipo = ? AND dia_semana = ?', ['dia_semana', 0]);
+    if (folgaCount.count === 0) {
+      await dbRun(
+        'INSERT INTO folgas (tipo, dia_semana, descricao) VALUES (?, ?, ?)',
+        ['dia_semana', 0, 'Domingo — fechado']
+      );
+      console.log('Seed: Folga de domingo criada.');
     }
 
     await dbHelpers.addLog('info', 'Banco de dados e seeds inicializados com sucesso.');
@@ -256,6 +295,31 @@ const dbHelpers = {
     return dbAll(
       'SELECT data, hora FROM agendamentos WHERE data >= ? AND data <= ? ORDER BY data, hora',
       [startDate, endDate]
+    );
+  },
+
+  // ── Folgas & Feriados ──────────────────────────────────────────
+  getFolgas: () => dbAll('SELECT * FROM folgas ORDER BY tipo, dia_semana, data'),
+
+  createFolga: async (tipo, data, dia_semana, descricao) => {
+    const result = await dbRun(
+      'INSERT INTO folgas (tipo, data, dia_semana, descricao) VALUES (?, ?, ?, ?)',
+      [tipo, data || null, dia_semana !== undefined ? dia_semana : null, descricao]
+    );
+    return { id: result.lastID, tipo, data, dia_semana, descricao };
+  },
+
+  deleteFolga: (id) => dbRun('DELETE FROM folgas WHERE id = ?', [id]),
+
+  // ── Configurações ──────────────────────────────────────────────
+  getConfig: (chave) => dbGet('SELECT valor FROM configuracoes WHERE chave = ?', [chave]),
+
+  getAllConfigs: () => dbAll('SELECT chave, valor FROM configuracoes'),
+
+  setConfig: async (chave, valor) => {
+    await dbRun(
+      'INSERT INTO configuracoes (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor',
+      [chave, valor]
     );
   },
 

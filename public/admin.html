@@ -59,6 +59,9 @@
         <button class="nav-item" data-tab="agendamentos">
           <i data-lucide="calendar-check"></i> Agendamentos
         </button>
+        <button class="nav-item" data-tab="agenda-config">
+          <i data-lucide="calendar-range"></i> Horários & Folgas
+        </button>
         <button class="nav-item" data-tab="servicos">
           <i data-lucide="scissors"></i> Serviços
         </button>
@@ -161,6 +164,104 @@
               </thead>
               <tbody id="appointments-tbody">
                 <tr><td colspan="7" class="empty-row">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Horários & Folgas Tab ──────────────────────── -->
+      <div class="tab-content hidden" id="tab-agenda-config">
+        <div class="page-header">
+          <h2>Horários & Folgas</h2>
+          <p>Defina o expediente e cadastre datas de folga/feriado</p>
+        </div>
+
+        <div class="grid-2">
+          <!-- Coluna Expediente -->
+          <div>
+            <div class="form-card">
+              <h3>Horários de Funcionamento</h3>
+              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">
+                Separe os horários por vírgula no formato de 24 horas (Ex: 09:00, 10:00, 14:00)
+              </p>
+              <form id="expediente-form">
+                <div class="input-group">
+                  <label>Horários do Dia</label>
+                  <input type="text" id="cfg-horarios" placeholder="Ex: 09:00, 10:00, 11:00">
+                </div>
+                <div class="input-group">
+                  <label>Dias de Trabalho</label>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.25rem;">
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="1"> Seg</label>
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="2"> Ter</label>
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="3"> Qua</label>
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="4"> Qui</label>
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="5"> Sex</label>
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="6"> Sáb</label>
+                    <label class="chk-label"><input type="checkbox" name="cfg-dias" value="0"> Dom</label>
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary sm" style="margin-top:1rem;">
+                  <i data-lucide="save"></i> Salvar Expediente
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Coluna Folgas/Feriados -->
+          <div>
+            <div class="form-card">
+              <h3>Cadastrar Folga / Feriado</h3>
+              <form id="folga-form">
+                <div class="input-group">
+                  <label>Tipo de Bloqueio</label>
+                  <select id="folga-tipo" required>
+                    <option value="data">Data Específica (Feriado, Férias...)</option>
+                    <option value="dia_semana">Dia da Semana Fixo (Ex: Todo Domingo)</option>
+                  </select>
+                </div>
+                <div class="input-group" id="group-folga-data">
+                  <label>Data</label>
+                  <input type="date" id="folga-data">
+                </div>
+                <div class="input-group hidden" id="group-folga-dia-semana">
+                  <label>Dia da Semana</label>
+                  <select id="folga-dia-semana">
+                    <option value="0">Domingo</option>
+                    <option value="1">Segunda-feira</option>
+                    <option value="2">Terça-feira</option>
+                    <option value="3">Quarta-feira</option>
+                    <option value="4">Quinta-feira</option>
+                    <option value="5">Sexta-feira</option>
+                    <option value="6">Sábado</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>Descrição / Motivo</label>
+                  <input type="text" id="folga-descricao" placeholder="Ex: Feriado de Ano Novo" required>
+                </div>
+                <button type="submit" class="btn-primary sm">
+                  <i data-lucide="plus"></i> Adicionar Bloqueio
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card" style="margin-top:1.5rem;">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Bloqueio / Folga</th>
+                  <th>Tipo</th>
+                  <th>Identificador</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="folgas-tbody">
+                <tr><td colspan="4" class="empty-row">Carregando bloqueios...</td></tr>
               </tbody>
             </table>
           </div>
@@ -412,6 +513,7 @@
 
         if (tab === 'dashboard') loadDashboard();
         else if (tab === 'agendamentos') loadAgendamentos();
+        else if (tab === 'agenda-config') loadAgendaConfig();
         else if (tab === 'servicos') loadServicos();
         else if (tab === 'portfolio') loadPortfolio();
         else if (tab === 'logs') loadLogs();
@@ -497,6 +599,178 @@
       await apiFetch(`/api/agendamentos/${id}`, { method: 'DELETE' });
       loadAgendamentos();
       showToast('Agendamento cancelado com sucesso.');
+    }
+
+    // ── Horários & Folgas Config ───────────────────────────
+    async function loadAgendaConfig() {
+      // Carregar expediente
+      try {
+        const res = await fetch('/api/configuracoes');
+        const configs = await res.json();
+        
+        const horMap = configs.find(c => c.chave === 'horarios_trabalho');
+        const diasMap = configs.find(c => c.chave === 'dias_trabalho');
+
+        if (horMap) {
+          const arr = JSON.parse(horMap.valor);
+          document.getElementById('cfg-horarios').value = arr.join(', ');
+        }
+        
+        if (diasMap) {
+          const arr = JSON.parse(diasMap.valor);
+          document.querySelectorAll('input[name="cfg-dias"]').forEach(chk => {
+            chk.checked = arr.includes(Number(chk.value));
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao ler configurações:', err);
+      }
+
+      // Carregar folgas cadastradas
+      loadFolgasTable();
+    }
+
+    async function loadFolgasTable() {
+      const tbody = document.getElementById('folgas-tbody');
+      try {
+        const res = await fetch('/api/folgas');
+        const list = await res.json();
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum bloqueio cadastrado.</td></tr>';
+          return;
+        }
+
+        const diasNomes = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+        tbody.innerHTML = list.map(f => {
+          let ident = '—';
+          if (f.tipo === 'data' && f.data) {
+            const [y, m, d] = f.data.split('-');
+            ident = `${d}/${m}/${y}`;
+          } else if (f.tipo === 'dia_semana' && f.dia_semana !== null) {
+            ident = diasNomes[f.dia_semana];
+          }
+
+          return `
+            <tr>
+              <td><strong>${esc(f.descricao)}</strong></td>
+              <td><span class="tag-service">${f.tipo === 'data' ? 'Data Específica' : 'Dia da Semana'}</span></td>
+              <td>${ident}</td>
+              <td>
+                <button class="btn-icon-danger" onclick="deleteFolga(${f.id})">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Erro ao carregar bloqueios.</td></tr>';
+      }
+    }
+
+    // Toggle campos formulário folgas
+    document.getElementById('folga-tipo').addEventListener('change', (e) => {
+      if (e.target.value === 'data') {
+        document.getElementById('group-folga-data').classList.remove('hidden');
+        document.getElementById('group-folga-dia-semana').classList.add('hidden');
+        document.getElementById('folga-data').required = true;
+      } else {
+        document.getElementById('group-folga-data').classList.add('hidden');
+        document.getElementById('group-folga-dia-semana').classList.remove('hidden');
+        document.getElementById('folga-data').required = false;
+      }
+    });
+
+    // Salvar Expediente
+    document.getElementById('expediente-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const rawHoras = document.getElementById('cfg-horarios').value.split(',')
+        .map(h => h.trim())
+        .filter(h => /^([01]\d|2[0-3]):[0-5]\d$/.test(h)); // Validar formato HH:MM
+      
+      const selecionados = Array.from(document.querySelectorAll('input[name="cfg-dias"]:checked'))
+        .map(chk => Number(chk.value));
+
+      if (rawHoras.length === 0) {
+        alert('Insira pelo menos um horário válido no formato HH:MM (ex: 09:00).');
+        return;
+      }
+
+      try {
+        await apiFetch('/api/configuracoes', {
+          method: 'POST',
+          body: JSON.stringify({ chave: 'horarios_trabalho', valor: JSON.stringify(rawHoras) })
+        });
+
+        await apiFetch('/api/configuracoes', {
+          method: 'POST',
+          body: JSON.stringify({ chave: 'dias_trabalho', valor: JSON.stringify(selecionados) })
+        });
+
+        showToast('Expediente atualizado!');
+      } catch {
+        alert('Erro ao salvar expediente.');
+      }
+    });
+
+    // Cadastrar Folga
+    document.getElementById('folga-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const tipo = document.getElementById('folga-tipo').value;
+      const data = document.getElementById('folga-data').value;
+      const dia_semana = Number(document.getElementById('folga-dia-semana').value);
+      const descricao = document.getElementById('folga-descricao').value.trim();
+
+      const payload = {
+        tipo,
+        descricao,
+        data: tipo === 'data' ? data : null,
+        dia_semana: tipo === 'dia_semana' ? dia_semana : null
+      };
+
+      if (tipo === 'data' && !data) {
+        alert('Por favor, informe a data do bloqueio.');
+        return;
+      }
+
+      try {
+        const res = await apiFetch('/api/folgas', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          document.getElementById('folga-form').reset();
+          // Reset toggle
+          document.getElementById('group-folga-data').classList.remove('hidden');
+          document.getElementById('group-folga-dia-semana').classList.add('hidden');
+          
+          loadFolgasTable();
+          showToast('Folga/Bloqueio cadastrado com sucesso!');
+        } else {
+          alert('Erro ao cadastrar bloqueio.');
+        }
+      } catch {
+        alert('Erro de conexão ao salvar folga.');
+      }
+    });
+
+    async function deleteFolga(id) {
+      if (!confirm('Deseja mesmo remover esta folga/bloqueio?')) return;
+      try {
+        const res = await apiFetch(`/api/folgas/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadFolgasTable();
+          showToast('Bloqueio removido com sucesso.');
+        }
+      } catch {
+        alert('Erro de conexão ao remover folga.');
+      }
     }
 
     // ── Serviços ───────────────────────────────────────────
