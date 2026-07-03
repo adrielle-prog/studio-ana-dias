@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const dbPath = path.join(__dirname, 'studio_ana_dias.db');
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -76,8 +77,66 @@ async function initializeDatabase() {
       )
     `);
 
-    console.log('Tabelas do banco de dados inicializadas com sucesso.');
-    await dbHelpers.addLog('info', 'Banco de dados inicializado com sucesso.');
+    // Tabela de administrador
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS admin (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tabela de serviços
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS servicos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        preco REAL NOT NULL,
+        duracao_min INTEGER NOT NULL,
+        descricao TEXT,
+        imagem TEXT, -- Armazenará link ou base64
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tabela de portfólio (Antes/Depois)
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS portfolio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        titulo TEXT NOT NULL,
+        imagem_antes TEXT NOT NULL, -- link ou base64
+        imagem_depois TEXT NOT NULL, -- link ou base64
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('Tabelas do banco de dados inicializadas.');
+
+    // Seed admin se estiver vazio
+    const adminCount = await dbGet('SELECT COUNT(*) as count FROM admin');
+    if (adminCount.count === 0) {
+      const hash = bcrypt.hashSync('admin123', 10);
+      await dbRun('INSERT INTO admin (username, password_hash) VALUES (?, ?)', ['admin', hash]);
+      console.log('Seed: Administrador padrão criado (username: admin, password: admin123)');
+    }
+
+    // Seed serviços se estiver vazio
+    const servicosCount = await dbGet('SELECT COUNT(*) as count FROM servicos');
+    if (servicosCount.count === 0) {
+      const defaultServices = [
+        ['Cílios (Extensão)', 120.00, 60, 'Extensão de cílios clássica ou volume russo para destacar seu olhar.'],
+        ['Sobrancelha (Design)', 50.00, 40, 'Design de sobrancelhas personalizado para harmonizar seu rosto.'],
+        ['Cabelo (Corte/Escova)', 90.00, 50, 'Lavagem especial, corte moderno e escova modeladora.'],
+        ['Unhas de Gel', 100.00, 90, 'Alongamento e blindagem de unhas com gel premium durável.']
+      ];
+      for (const s of defaultServices) {
+        await dbRun('INSERT INTO servicos (nome, preco, duracao_min, descricao) VALUES (?, ?, ?, ?)', s);
+      }
+      console.log('Seed: Serviços padrão criados.');
+    }
+
+    await dbHelpers.addLog('info', 'Banco de dados e seeds inicializados com sucesso.');
   } catch (error) {
     console.error('Erro ao inicializar tabelas:', error);
   }
@@ -85,9 +144,9 @@ async function initializeDatabase() {
 
 // Funções Helpers
 const dbHelpers = {
-  addLog: async (tipo, mensagem) => {
+  addLog: async (tipo, message) => {
     try {
-      await dbRun('INSERT INTO logs_automacao (tipo, mensagem) VALUES (?, ?)', [tipo, mensagem]);
+      await dbRun('INSERT INTO logs_automacao (tipo, mensagem) VALUES (?, ?)', [tipo, message]);
     } catch (e) {
       console.error('Erro ao salvar log:', e);
     }
@@ -101,10 +160,15 @@ const dbHelpers = {
     return dbRun('DELETE FROM logs_automacao');
   },
 
+  // Autenticação Admin
+  getAdminByUsername: (username) => {
+    return dbGet('SELECT * FROM admin WHERE username = ?', [username]);
+  },
+
+  // Clientes e Agendamentos
   getOrCreateCliente: async (nome, telefone, email) => {
     const existing = await dbGet('SELECT * FROM clientes WHERE telefone = ?', [telefone]);
     if (existing) {
-      // Atualiza o email caso tenha mudado
       if (email && existing.email !== email) {
         await dbRun('UPDATE clientes SET email = ?, nome = ? WHERE id = ?', [email, nome, existing.id]);
         existing.email = email;
@@ -142,15 +206,75 @@ const dbHelpers = {
     return dbRun('DELETE FROM agendamentos WHERE id = ?', [id]);
   },
 
+  // CRUD de Serviços
+  getServicos: () => {
+    return dbAll('SELECT * FROM servicos ORDER BY nome');
+  },
+
+  getServicoById: (id) => {
+    return dbGet('SELECT * FROM servicos WHERE id = ?', [id]);
+  },
+
+  createServico: async (nome, preco, duracao_min, descricao, imagem) => {
+    const result = await dbRun(
+      'INSERT INTO servicos (nome, preco, duracao_min, descricao, imagem) VALUES (?, ?, ?, ?, ?)',
+      [nome, preco, duracao_min, descricao, imagem]
+    );
+    return { id: result.lastID, nome, preco, duracao_min, descricao, imagem };
+  },
+
+  updateServico: (id, nome, preco, duracao_min, descricao, imagem) => {
+    return dbRun(
+      'UPDATE servicos SET nome = ?, preco = ?, duracao_min = ?, descricao = ?, imagem = COALESCE(?, imagem) WHERE id = ?',
+      [nome, preco, duracao_min, descricao, imagem, id]
+    );
+  },
+
+  deleteServico: (id) => {
+    return dbRun('DELETE FROM servicos WHERE id = ?', [id]);
+  },
+
+  // CRUD de Portfólio (Antes/Depois)
+  getPortfolio: () => {
+    return dbAll('SELECT * FROM portfolio ORDER BY created_at DESC');
+  },
+
+  createPortfolioItem: async (titulo, imagem_antes, imagem_depois) => {
+    const result = await dbRun(
+      'INSERT INTO portfolio (titulo, imagem_antes, imagem_depois) VALUES (?, ?, ?)',
+      [titulo, imagem_antes, imagem_depois]
+    );
+    return { id: result.lastID, titulo, imagem_antes, imagem_depois };
+  },
+
+  deletePortfolioItem: (id) => {
+    return dbRun('DELETE FROM portfolio WHERE id = ?', [id]);
+  },
+
+  // Estatísticas
   getStats: async () => {
     const totalAppointments = await dbGet('SELECT COUNT(*) as count FROM agendamentos');
     const totalClients = await dbGet('SELECT COUNT(*) as count FROM clientes');
-    const successfulPix = await dbGet('SELECT COUNT(*) as count FROM agendamentos WHERE status_pix = "pago"');
+    const totalServices = await dbGet('SELECT COUNT(*) as count FROM servicos');
     
+    // Obter faturamento (calculado baseado em 20% do sinal dos agendamentos confirmados)
+    // Para simplificar, o sinal de 20% é calculado sobre a média de preço dos serviços ou o preço específico.
+    // Vamos somar os valores dos serviços agendados e aplicar 20%.
+    const faturamentoRow = await dbGet(`
+      SELECT SUM(s.preco) as total_bruto
+      FROM agendamentos a
+      JOIN servicos s ON a.servico_id = s.id OR a.servico_nome = s.nome
+      WHERE a.status_pix = 'pago'
+    `);
+    const faturamentoBruto = faturamentoRow?.total_bruto || 0;
+    const faturamentoSinal = faturamentoBruto * 0.20;
+
     return {
       totalAppointments: totalAppointments?.count || 0,
       totalClients: totalClients?.count || 0,
-      successfulPix: successfulPix?.count || 0,
+      totalServices: totalServices?.count || 0,
+      revenueSinal: parseFloat(faturamentoSinal.toFixed(2)),
+      revenueTotal: parseFloat(faturamentoBruto.toFixed(2))
     };
   }
 };

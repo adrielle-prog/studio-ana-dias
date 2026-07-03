@@ -3,413 +3,471 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Studio Ana Dias - Automação de Agendamentos</title>
+  <title>Studio Ana Dias - Agendamento e Beleza</title>
   <!-- Google Fonts: Outfit & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="style.css">
-  <!-- Lucide Icons (CDN) -->
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="glass-bg"></div>
+
+  <!-- Header/Navbar -->
+  <header class="app-header client-nav">
+    <div class="logo-container">
+      <div class="logo-circle">AD</div>
+      <div>
+        <h1>Studio Ana Dias</h1>
+        <p class="subtitle">Realçando sua beleza natural</p>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="#portfolio">Portfólio</a>
+      <a href="#servicos" class="nav-btn-highlight">Ver Serviços</a>
+      <a href="/admin" class="nav-admin-link"><i data-lucide="lock" style="width: 14px; display: inline; vertical-align: middle;"></i> Admin</a>
+    </div>
+  </header>
+
   <div class="app-container">
     
-    <!-- Header -->
-    <header class="app-header">
-      <div class="logo-container">
-        <div class="logo-circle">AD</div>
-        <div>
-          <h1>Studio Ana Dias</h1>
-          <p class="subtitle">Sistema Integrado de Agendamento & Automação</p>
-        </div>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">🌸 Beleza & Estilo</span>
+        <h2>Sinta-se única, sinta-se radiante.</h2>
+        <p>Agende seu horário com pagamento antecipado simplificado via Pix. Procedimentos modernos de cílios, sobrancelhas e estética geral.</p>
+        <a href="#servicos" class="btn-hero">
+          <i data-lucide="calendar"></i> Agendar Agora
+        </a>
       </div>
-      <div class="status-indicator">
-        <span class="pulse-dot"></span>
-        <span>Automação Ativa</span>
-      </div>
-    </header>
-
-    <!-- Stats Grid -->
-    <section class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon purple">
-          <i data-lucide="calendar"></i>
-        </div>
-        <div class="stat-info">
-          <h3>Total Agendamentos</h3>
-          <p id="stat-total-appointments">0</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon pink">
-          <i data-lucide="users"></i>
-        </div>
-        <div class="stat-info">
-          <h3>Clientes Atendidas</h3>
-          <p id="stat-total-clients">0</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green">
-          <i data-lucide="check-circle-2"></i>
-        </div>
-        <div class="stat-info">
-          <h3>Pix Confirmados (20%)</h3>
-          <p id="stat-successful-pix">0</p>
+      <div class="hero-visual">
+        <div class="visual-glow-circle"></div>
+        <div class="visual-card">
+          <div class="visual-header">
+            <span class="dot-red"></span>
+            <span class="dot-yellow"></span>
+            <span class="dot-green"></span>
+          </div>
+          <div class="visual-body">
+            <div class="client-testimonial">
+              <p>"O melhor design de sobrancelha que já fiz na vida! Atendimento impecável e agendamento super rápido."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">M</div>
+                <div>
+                  <strong>Mariana Souza</strong>
+                  <span>Cliente Recorrente</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Main Workspace -->
-    <main class="main-workspace">
-      
-      <!-- Left Column: Webhook Simulator -->
-      <section class="workspace-card simulator-card">
-        <div class="card-header">
-          <div class="header-title">
-            <i data-lucide="send" class="icon-purple"></i>
-            <h2>Simulador de Webhook Antigravity</h2>
+    <!-- Portfolio Section (Antes & Depois) -->
+    <section id="portfolio" class="client-section">
+      <div class="section-title-container">
+        <h2>Antes & Depois</h2>
+        <p>Veja os resultados reais de nossas clientes e apaixone-se pelo processo.</p>
+      </div>
+
+      <div class="portfolio-slider-container" id="portfolio-list">
+        <!-- Inserido dinamicamente -->
+        <div class="portfolio-placeholder">
+          <div class="compare-container">
+            <div class="compare-img compare-before" style="background-image: url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=600');"></div>
+            <div class="compare-img compare-after" style="background-image: url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=600');"></div>
+            <div class="compare-slider"></div>
           </div>
-          <span class="badge">POST /api/webhook/agendamento</span>
+          <span class="portfolio-title-tag">Extensão de Cílios Clássica</span>
         </div>
+      </div>
+    </section>
+
+    <!-- Services Catalog Section -->
+    <section id="servicos" class="client-section">
+      <div class="section-title-container">
+        <h2>Nossos Serviços</h2>
+        <p>Selecione o procedimento ideal para você e reserve seu horário.</p>
+      </div>
+
+      <div class="services-grid" id="services-container">
+        <!-- Carregado dinamicamente -->
+        <div class="loading-spinner">Carregando serviços...</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Booking/Pix Modal -->
+  <div class="modal-overlay hidden" id="booking-modal">
+    <div class="modal-card">
+      <div class="modal-close" id="btn-close-modal">
+        <i data-lucide="x"></i>
+      </div>
+      
+      <!-- Modal Step 1: Form -->
+      <div class="modal-step" id="step-form">
+        <h3>Confirmar Agendamento</h3>
+        <p class="modal-sub">Insira seus dados para reservar o serviço: <strong id="selected-service-name">Cílios</strong></p>
         
-        <form id="webhook-form" class="webhook-form">
-          <!-- Cliente Section -->
-          <div class="form-section">
-            <h3><i data-lucide="user"></i> Dados da Cliente</h3>
+        <form id="client-booking-form">
+          <div class="input-group">
+            <label for="client-name">Seu Nome Completo</label>
+            <input type="text" id="client-name" placeholder="Ex: Patrícia Lima" required>
+          </div>
+          <div class="grid-2">
             <div class="input-group">
-              <label for="client-name">Nome Completo</label>
-              <input type="text" id="client-name" placeholder="Ex: Maria Oliveira" required value="Maria Oliveira">
+              <label for="client-phone">Seu WhatsApp</label>
+              <input type="tel" id="client-phone" placeholder="Ex: 11999998888" required>
             </div>
-            <div class="grid-2">
-              <div class="input-group">
-                <label for="client-phone">WhatsApp / Telefone</label>
-                <input type="tel" id="client-phone" placeholder="Ex: 5511999998888" required value="5511999998888">
-              </div>
-              <div class="input-group">
-                <label for="client-email">E-mail</label>
-                <input type="email" id="client-email" placeholder="Ex: maria@email.com" value="maria@email.com">
-              </div>
-            </div>
-          </div>
-
-          <!-- Agendamento Section -->
-          <div class="form-section">
-            <h3><i data-lucide="clock"></i> Dados do Agendamento</h3>
             <div class="input-group">
-              <label for="service-id">Serviço Desejado</label>
-              <select id="service-id" required>
-                <option value="cilios" selected>Cílios (Extensão) - R$ 120,00</option>
-                <option value="sobrancelha">Sobrancelha (Design) - R$ 50,00</option>
-                <option value="cabelo">Cabelo (Corte/Escova) - R$ 90,00</option>
-                <option value="unha">Unhas de Gel - R$ 100,00</option>
-              </select>
+              <label for="client-email">Seu E-mail (Opcional)</label>
+              <input type="email" id="client-email" placeholder="Ex: patricia@email.com">
             </div>
-            <div class="grid-3">
-              <div class="input-group">
-                <label for="booking-date">Data</label>
-                <input type="date" id="booking-date" required>
-              </div>
-              <div class="input-group">
-                <label for="booking-hour">Horário</label>
-                <input type="time" id="booking-hour" required>
-              </div>
-              <div class="input-group">
-                <label for="pix-status">Status do Pix (20%)</label>
-                <select id="pix-status" required>
-                  <option value="pago" class="status-option-pago" selected>Confirmado (Pago)</option>
-                  <option value="pendente" class="status-option-pendente">Pendente / Não Pago</option>
-                </select>
-              </div>
+          </div>
+          <div class="grid-2">
+            <div class="input-group">
+              <label for="booking-date">Data Desejada</label>
+              <input type="date" id="booking-date" required>
+            </div>
+            <div class="input-group">
+              <label for="booking-hour">Horário</label>
+              <input type="time" id="booking-hour" required>
             </div>
           </div>
 
-          <!-- Metadados Section -->
-          <div class="form-section">
-            <h3><i data-lucide="database"></i> Metadados Adicionais</h3>
-            <div class="grid-2">
-              <div class="input-group">
-                <label for="meta-origin">Origem do Lead</label>
-                <input type="text" id="meta-origin" placeholder="Site Principal" value="Site Studio Ana Dias">
-              </div>
-              <div class="input-group">
-                <label for="meta-timestamp">Timestamp</label>
-                <input type="text" id="meta-timestamp" readonly>
-              </div>
-            </div>
+          <div class="booking-notice">
+            <i data-lucide="shield-check"></i>
+            <span>Para confirmar, é necessário o pagamento de um sinal de <strong>20% via Pix</strong>.</span>
           </div>
 
-          <button type="submit" class="btn-submit" id="btn-submit">
-            <i data-lucide="play"></i> Enviar Evento ao Webhook
+          <button type="submit" class="btn-submit">
+            Avançar para o Pagamento (Pix) <i data-lucide="arrow-right"></i>
           </button>
         </form>
-      </section>
+      </div>
 
-      <!-- Right Column: Monitoring Logs & Appointments -->
-      <div class="workspace-column">
+      <!-- Modal Step 2: Pix Payment -->
+      <div class="modal-step hidden" id="step-pix">
+        <h3>Pagamento de Sinal via Pix</h3>
+        <p class="modal-sub">Realize o pagamento de <strong id="pix-value">R$ 0,00</strong> (20%) para garantir sua vaga.</p>
         
-        <!-- Live Logger -->
-        <section class="workspace-card logger-card">
-          <div class="card-header">
-            <div class="header-title">
-              <i data-lucide="terminal" class="icon-pink"></i>
-              <h2>Terminal de Logs de Automação</h2>
-            </div>
-            <button class="btn-icon" id="clear-logs-btn" title="Limpar logs">
-              <i data-lucide="trash-2"></i>
+        <div class="pix-payment-box">
+          <div class="pix-qr-container">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020101021226830014br.gov.bcb.pix2561pix.render.com/studio-ana-dias520400005303986540524.005802BR5915StudioAnaDias6009SaoPaulo62070503001" alt="Pix QR Code">
+          </div>
+          <div class="pix-code-container">
+            <label>Chave Pix Copie e Cole</label>
+            <input type="text" id="pix-copy-paste" readonly value="00020101021226830014br.gov.bcb.pix2561pix.render.com/studio-ana-dias520400005303986">
+            <button class="btn-copy-code" type="button" id="btn-copy-pix">
+              <i data-lucide="copy"></i> Copiar Código
             </button>
           </div>
-          <div class="terminal-logs" id="terminal-logs">
-            <div class="terminal-row system-info">
-              <span class="term-time">[11:00:00]</span>
-              <span class="term-tag">[INFO]</span>
-              <span class="term-msg">Aguardando gatilho do webhook...</span>
-            </div>
-          </div>
-        </section>
+        </div>
 
-        <!-- Appointments List -->
-        <section class="workspace-card appointments-card">
-          <div class="card-header">
-            <div class="header-title">
-              <i data-lucide="calendar-check" class="icon-green"></i>
-              <h2>Agendamentos Confirmados</h2>
-            </div>
-          </div>
-          <div class="appointments-list-container">
-            <div class="appointments-empty" id="appointments-empty">
-              <i data-lucide="calendar" size="48"></i>
-              <p>Nenhum agendamento ativo.</p>
-            </div>
-            <table class="appointments-table hidden" id="appointments-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Serviço</th>
-                  <th>Data/Hora</th>
-                  <th>Pix (Sinal)</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="appointments-tbody">
-                <!-- Linhas inseridas dinamicamente -->
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <div class="booking-notice warning">
+          <i data-lucide="alert-triangle"></i>
+          <span>O agendamento só será registrado no banco após clicar no botão abaixo para confirmar o Pix.</span>
+        </div>
 
+        <div class="grid-2">
+          <button class="btn-cancel" id="btn-back-pix">Voltar</button>
+          <button class="btn-submit" id="btn-confirm-pix">
+            <i data-lucide="check-circle"></i> Confirmar Pagamento Pix
+          </button>
+        </div>
       </div>
-    </main>
+
+      <!-- Modal Step 3: Success Confirmation -->
+      <div class="modal-step hidden" id="step-success">
+        <div class="success-header">
+          <div class="success-icon-circle">
+            <i data-lucide="check"></i>
+          </div>
+          <h3>Agendamento Confirmado!</h3>
+          <p>Seu horário foi bloqueado com sucesso.</p>
+        </div>
+
+        <div class="success-summary-box">
+          <div class="summary-row">
+            <span>Serviço:</span>
+            <strong id="sum-service">Cílios</strong>
+          </div>
+          <div class="summary-row">
+            <span>Data e Hora:</span>
+            <strong id="sum-datetime">12/07/2026 às 14:00</strong>
+          </div>
+          <div class="summary-row">
+            <span>Status Pix (Sinal):</span>
+            <span class="pix-badge pago">Pago</span>
+          </div>
+        </div>
+
+        <div class="success-channels">
+          <div class="channel-item">
+            <i data-lucide="message-square" class="icon-green"></i>
+            <div>
+              <strong>WhatsApp Confirmado</strong>
+              <span>Mensagem de boas-vindas enviada!</span>
+            </div>
+          </div>
+          <div class="channel-item">
+            <i data-lucide="calendar" class="icon-purple"></i>
+            <div>
+              <strong>Google Calendar</strong>
+              <span>Evento adicionado na nossa agenda.</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-submit" id="btn-finish-booking">Entendido</button>
+      </div>
+
+    </div>
   </div>
 
   <script>
-    // Inicializar Lucide Icons
+    // Inicializar Ícones
     lucide.createIcons();
 
-    // Definir data padrão no formulário para amanhã
-    const dateInput = document.getElementById('booking-date');
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    dateInput.value = tomorrow.toISOString().split('T')[0];
+    let selectedService = null;
+    let servicesList = [];
 
-    // Definir hora padrão
-    document.getElementById('booking-hour').value = '14:00';
-
-    // Atualizar Timestamp do metadado em tempo real
-    function updateTimestamp() {
-      document.getElementById('meta-timestamp').value = new Date().toISOString();
-    }
-    updateTimestamp();
-    setInterval(updateTimestamp, 1000);
-
-    // Funções de API
-    async function loadStats() {
+    // Carregar Serviços Dinamicamente
+    async function fetchServices() {
       try {
-        const res = await fetch('/api/stats');
-        const stats = await res.json();
-        document.getElementById('stat-total-appointments').innerText = stats.totalAppointments;
-        document.getElementById('stat-total-clients').innerText = stats.totalClients;
-        document.getElementById('stat-successful-pix').innerText = stats.successfulPix;
-      } catch (err) {
-        console.error('Erro ao buscar estatísticas:', err);
-      }
-    }
-
-    async function loadLogs() {
-      try {
-        const res = await fetch('/api/logs');
-        const logs = await res.json();
-        const container = document.getElementById('terminal-logs');
-        container.innerHTML = '';
+        const res = await fetch('/api/servicos');
+        const services = await res.json();
+        servicesList = services;
         
-        if (logs.length === 0) {
-          container.innerHTML = `
-            <div class="terminal-row system-info">
-              <span class="term-time">[${new Date().toLocaleTimeString()}]</span>
-              <span class="term-tag">[INFO]</span>
-              <span class="term-msg">Aguardando gatilho do webhook...</span>
+        const container = document.getElementById('services-container');
+        container.innerHTML = '';
+
+        if (services.length === 0) {
+          container.innerHTML = '<p class="text-muted">Nenhum serviço disponível no momento.</p>';
+          return;
+        }
+
+        services.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'service-card-client';
+          
+          // Imagem padrão caso não possua
+          const imgSrc = s.imagem || 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=400';
+
+          card.innerHTML = `
+            <div class="service-img" style="background-image: url('${imgSrc}');"></div>
+            <div class="service-details">
+              <h3>${escapeHtml(s.nome)}</h3>
+              <p class="service-desc">${escapeHtml(s.descricao || 'Sem descrição.')}</p>
+              <div class="service-meta">
+                <span class="duration"><i data-lucide="clock"></i> ${s.duracao_min} min</span>
+                <span class="price">R$ ${s.preco.toFixed(2)}</span>
+              </div>
+              <button class="btn-book-service" onclick="openBookingModal(${s.id})">
+                Reservar Horário
+              </button>
             </div>
           `;
-          return;
-        }
-
-        logs.forEach(log => {
-          const row = document.createElement('div');
-          row.className = `terminal-row ${log.tipo}`;
-          
-          const timeFormatted = new Date(log.timestamp).toLocaleTimeString();
-          
-          row.innerHTML = `
-            <span class="term-time">[${timeFormatted}]</span>
-            <span class="term-tag">[${log.tipo.toUpperCase()}]</span>
-            <span class="term-msg">${escapeHtml(log.mensagem)}</span>
-          `;
-          container.appendChild(row);
+          container.appendChild(card);
         });
+        lucide.createIcons();
       } catch (err) {
-        console.error('Erro ao buscar logs:', err);
+        console.error('Erro ao buscar serviços:', err);
       }
     }
 
-    async function loadAppointments() {
+    // Carregar Portfólio Dinamicamente
+    async function fetchPortfolio() {
       try {
-        const res = await fetch('/api/agendamentos');
-        const appointments = await res.json();
-        const tbody = document.getElementById('appointments-tbody');
-        const table = document.getElementById('appointments-table');
-        const emptyState = document.getElementById('appointments-empty');
+        const res = await fetch('/api/portfolio');
+        const portfolio = await res.json();
         
-        tbody.innerHTML = '';
+        const container = document.getElementById('portfolio-list');
+        if (portfolio.length > 0) {
+          container.innerHTML = '';
+          portfolio.forEach(item => {
+            const slide = document.createElement('div');
+            slide.className = 'portfolio-slide';
+            
+            slide.innerHTML = `
+              <div class="compare-container">
+                <div class="compare-img compare-before" style="background-image: url('${item.imagem_antes}');"></div>
+                <div class="compare-img compare-after" style="background-image: url('${item.imagem_depois}');"></div>
+                <div class="compare-slider"></div>
+              </div>
+              <span class="portfolio-title-tag">${escapeHtml(item.titulo)}</span>
+            `;
+            container.appendChild(slide);
+          });
+          setupBeforeAfterSliders();
+        }
+      } catch (err) {
+        console.error('Erro ao buscar portfólio:', err);
+      }
+    }
+
+    // Lógica do Slider Antes/Depois
+    function setupBeforeAfterSliders() {
+      const containers = document.querySelectorAll('.compare-container');
+      containers.forEach(container => {
+        const afterImg = container.querySelector('.compare-after');
+        const sliderBar = container.querySelector('.compare-slider');
         
-        if (appointments.length === 0) {
-          table.classList.add('hidden');
-          emptyState.classList.remove('hidden');
-          return;
+        // Estado inicial
+        let isDragging = false;
+        
+        function move(x) {
+          const rect = container.getBoundingClientRect();
+          let position = ((x - rect.left) / rect.width) * 100;
+          if (position < 0) position = 0;
+          if (position > 100) position = 100;
+          
+          afterImg.style.clipPath = `polygon(${position}% 0, 100% 0, 100% 100%, ${position}% 100%)`;
+          sliderBar.style.left = `${position}%`;
         }
 
-        table.classList.remove('hidden');
-        emptyState.classList.add('hidden');
-
-        appointments.forEach(app => {
-          const tr = document.createElement('tr');
-          
-          // Formatar data para DD/MM/AAAA
-          const parts = app.data.split('-');
-          const dataBr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : app.data;
-          
-          tr.innerHTML = `
-            <td>
-              <div class="client-cell">
-                <span class="client-name">${escapeHtml(app.cliente_nome)}</span>
-                <span class="client-contact">${escapeHtml(app.cliente_telefone)}</span>
-              </div>
-            </td>
-            <td><span class="service-tag">${escapeHtml(app.servico_nome)}</span></td>
-            <td>
-              <div class="date-cell">
-                <strong>${dataBr}</strong>
-                <span>às ${app.hora}</span>
-              </div>
-            </td>
-            <td>
-              <span class="pix-badge ${app.status_pix}">
-                ${app.status_pix === 'pago' ? 'Pago' : 'Pendente'}
-              </span>
-            </td>
-            <td>
-              <button class="btn-cancel" onclick="cancelAppointment(${app.id})">
-                Cancelar
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
+        // Eventos mouse
+        container.addEventListener('mousedown', () => isDragging = true);
+        window.addEventListener('mouseup', () => isDragging = false);
+        container.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          move(e.clientX);
         });
-      } catch (err) {
-        console.error('Erro ao buscar agendamentos:', err);
-      }
+
+        // Eventos touch para mobile
+        container.addEventListener('touchstart', () => isDragging = true);
+        window.addEventListener('touchend', () => isDragging = false);
+        container.addEventListener('touchmove', (e) => {
+          if (!isDragging) return;
+          move(e.touches[0].clientX);
+        });
+      });
     }
 
-    async function cancelAppointment(id) {
-      if (!confirm('Deseja realmente cancelar este agendamento?')) return;
-      try {
-        const res = await fetch(`/api/agendamentos/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          await loadAppointments();
-          await loadStats();
-          await loadLogs();
-        }
-      } catch (err) {
-        console.error('Erro ao deletar agendamento:', err);
-      }
+    // Fluxo de Agendamento Modal
+    function openBookingModal(serviceId) {
+      selectedService = servicesList.find(s => s.id === serviceId);
+      if (!selectedService) return;
+
+      document.getElementById('selected-service-name').innerText = selectedService.nome;
+      
+      // Definir data mínima como amanhã
+      const dateInput = document.getElementById('booking-date');
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      dateInput.min = tomorrow.toISOString().split('T')[0];
+      dateInput.value = tomorrow.toISOString().split('T')[0];
+      document.getElementById('booking-hour').value = '14:00';
+
+      // Resetar passos
+      showStep('step-form');
+      
+      document.getElementById('booking-modal').classList.remove('hidden');
     }
 
-    // Limpar logs
-    document.getElementById('clear-logs-btn').addEventListener('click', async () => {
-      try {
-        const res = await fetch('/api/logs', { method: 'DELETE' });
-        if (res.ok) {
-          await loadLogs();
-        }
-      } catch (err) {
-        console.error('Erro ao limpar logs:', err);
-      }
-    });
+    function showStep(stepId) {
+      document.querySelectorAll('.modal-step').forEach(step => step.classList.add('hidden'));
+      document.getElementById(stepId).classList.remove('hidden');
+    }
 
-    // Submissão do webhook simulado
-    document.getElementById('webhook-form').addEventListener('submit', async (e) => {
+    // Submissão do Step 1: Form
+    document.getElementById('client-booking-form').addEventListener('submit', (e) => {
       e.preventDefault();
       
+      const sinal = selectedService.preco * 0.20;
+      document.getElementById('pix-value').innerText = `R$ ${sinal.toFixed(2)}`;
+      
+      showStep('step-pix');
+    });
+
+    // Voltar do Pix
+    document.getElementById('btn-back-pix').addEventListener('click', () => {
+      showStep('step-form');
+    });
+
+    // Confirmar Pix e registrar agendamento
+    document.getElementById('btn-confirm-pix').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-confirm-pix');
+      btn.disabled = true;
+      btn.innerHTML = 'Verificando Pix...';
+
       const payload = {
         cliente: {
           nome: document.getElementById('client-name').value,
           telefone: document.getElementById('client-phone').value,
-          email: document.getElementById('client-email').value,
+          email: document.getElementById('client-email').value
         },
         agendamento: {
-          servico_id: document.getElementById('service-id').value,
+          servico_id: selectedService.id.toString(),
           data: document.getElementById('booking-date').value,
           hora: document.getElementById('booking-hour').value,
-          status_pix: document.getElementById('pix-status').value,
+          status_pix: 'pago' // Simulando Pix pago
         },
         metadados: {
-          origem_site: document.getElementById('meta-origin').value,
-          timestamp: document.getElementById('meta-timestamp').value,
+          origem_site: 'Landing Page Pública',
+          timestamp: new Date().toISOString()
         }
       };
 
-      const btnSubmit = document.getElementById('btn-submit');
-      btnSubmit.disabled = true;
-      btnSubmit.innerHTML = '<i class="pulse-dot"></i> Processando...';
-
       try {
-        const response = await fetch('/api/webhook/agendamento', {
+        const res = await fetch('/api/webhook/agendamento', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-          showNotification('Sucesso', 'Agendamento confirmado!', 'success');
+
+        const result = await res.json();
+
+        if (res.ok) {
+          // Preencher Step 3 de Sucesso
+          document.getElementById('sum-service').innerText = selectedService.nome;
+          
+          const parts = payload.agendamento.data.split('-');
+          const dateBr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          document.getElementById('sum-datetime').innerText = `${dateBr} às ${payload.agendamento.hora}`;
+          
+          showStep('step-success');
         } else {
-          showNotification('Erro', result.error || 'Erro ao processar', 'error');
+          alert(result.error || 'Ocorreu um erro ao confirmar.');
         }
       } catch (err) {
-        showNotification('Erro de Conexão', 'Não foi possível contatar o webhook.', 'error');
+        alert('Erro ao se conectar ao servidor.');
       } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.innerHTML = '<i data-lucide="play"></i> Enviar Evento ao Webhook';
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="check-circle"></i> Confirmar Pagamento Pix';
         lucide.createIcons();
-        
-        // Recarregar painéis
-        await loadAppointments();
-        await loadStats();
-        await loadLogs();
       }
+    });
+
+    // Botão Copiar Pix
+    document.getElementById('btn-copy-pix').addEventListener('click', () => {
+      const copyText = document.getElementById('pix-copy-paste');
+      copyText.select();
+      copyText.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(copyText.value);
+      
+      const copyBtn = document.getElementById('btn-copy-pix');
+      copyBtn.innerHTML = '<i data-lucide="check"></i> Copiado!';
+      lucide.createIcons();
+      setTimeout(() => {
+        copyBtn.innerHTML = '<i data-lucide="copy"></i> Copiar Código';
+        lucide.createIcons();
+      }, 2000);
+    });
+
+    // Fechar Modal
+    document.getElementById('btn-close-modal').addEventListener('click', () => {
+      document.getElementById('booking-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-finish-booking').addEventListener('click', () => {
+      document.getElementById('booking-modal').classList.add('hidden');
     });
 
     // Utilitários
@@ -418,25 +476,10 @@
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    function showNotification(title, message, type) {
-      const container = document.getElementById('terminal-logs');
-      const tempRow = document.createElement('div');
-      tempRow.className = `terminal-row ${type} highlight`;
-      tempRow.innerHTML = `
-        <span class="term-time">[${new Date().toLocaleTimeString()}]</span>
-        <span class="term-tag">[NOTIFICAÇÃO]</span>
-        <span class="term-msg"><strong>${title}:</strong> ${escapeHtml(message)}</span>
-      `;
-      container.insertBefore(tempRow, container.firstChild);
-      
-      // Auto scroll para o topo do terminal
-      container.scrollTop = 0;
-    }
-
-    // Inicialização da página
-    loadStats();
-    loadLogs();
-    loadAppointments();
+    // Inicialização
+    fetchServices();
+    fetchPortfolio();
+    setTimeout(setupBeforeAfterSliders, 1000);
   </script>
 </body>
 </html>

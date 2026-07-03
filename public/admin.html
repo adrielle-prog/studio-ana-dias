@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Ana Dias - Painel Administrativo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="glass-bg"></div>
+
+  <!-- ─── LOGIN SCREEN ─────────────────────────────────── -->
+  <div id="login-screen" class="screen-full">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-circle">AD</div>
+        <h1>Studio Ana Dias</h1>
+        <p>Painel Administrativo</p>
+      </div>
+      <form id="login-form">
+        <div class="input-group">
+          <label for="login-username"><i data-lucide="user"></i> Usuário</label>
+          <input type="text" id="login-username" placeholder="admin" required>
+        </div>
+        <div class="input-group">
+          <label for="login-password"><i data-lucide="lock"></i> Senha</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </div>
+        <div id="login-error" class="error-msg hidden"></div>
+        <button type="submit" class="btn-primary" id="login-btn">
+          <i data-lucide="log-in"></i> Entrar
+        </button>
+      </form>
+      <a href="/" class="login-back-link"><i data-lucide="arrow-left"></i> Voltar ao site</a>
+    </div>
+  </div>
+
+  <!-- ─── ADMIN PANEL ──────────────────────────────────── -->
+  <div id="admin-panel" class="hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-circle small">AD</div>
+        <div>
+          <h2>Studio Ana Dias</h2>
+          <p id="admin-greeting">Olá, admin</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="dashboard">
+          <i data-lucide="layout-dashboard"></i> Dashboard
+        </button>
+        <button class="nav-item" data-tab="agendamentos">
+          <i data-lucide="calendar-check"></i> Agendamentos
+        </button>
+        <button class="nav-item" data-tab="servicos">
+          <i data-lucide="scissors"></i> Serviços
+        </button>
+        <button class="nav-item" data-tab="portfolio">
+          <i data-lucide="image"></i> Portfólio
+        </button>
+        <button class="nav-item" data-tab="logs">
+          <i data-lucide="terminal"></i> Logs
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="btn-logout" class="btn-logout">
+          <i data-lucide="log-out"></i> Sair
+        </button>
+        <a href="/" class="btn-goto-site">
+          <i data-lucide="external-link"></i> Ver Site
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+
+      <!-- ── Dashboard Tab ─────────────────────────────── -->
+      <div class="tab-content active" id="tab-dashboard">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p>Visão geral do Studio</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon purple"><i data-lucide="calendar"></i></div>
+            <div class="stat-info">
+              <h3>Total Agendamentos</h3>
+              <p id="s-appointments">—</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon pink"><i data-lucide="users"></i></div>
+            <div class="stat-info">
+              <h3>Clientes Atendidas</h3>
+              <p id="s-clients">—</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i data-lucide="scissors"></i></div>
+            <div class="stat-info">
+              <h3>Serviços Cadastrados</h3>
+              <p id="s-services">—</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon gold"><i data-lucide="dollar-sign"></i></div>
+            <div class="stat-info">
+              <h3>Sinais Recebidos (Pix)</h3>
+              <p id="s-revenue">—</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-webhook-card">
+          <div class="dwc-header">
+            <i data-lucide="link" class="icon-purple"></i>
+            <div>
+              <h3>URL do Webhook de Automação</h3>
+              <p>Aponte seu formulário para este endereço</p>
+            </div>
+          </div>
+          <div class="webhook-url-box">
+            <code id="webhook-url-display">Carregando...</code>
+            <button class="btn-copy-sm" id="btn-copy-webhook">
+              <i data-lucide="copy"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Agendamentos Tab ──────────────────────────── -->
+      <div class="tab-content hidden" id="tab-agendamentos">
+        <div class="page-header">
+          <h2>Agendamentos</h2>
+          <p>Gerencie as reservas das clientes</p>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table class="data-table" id="appointments-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Cliente</th>
+                  <th>Serviço</th>
+                  <th>Data</th>
+                  <th>Horário</th>
+                  <th>Pix (Sinal)</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="appointments-tbody">
+                <tr><td colspan="7" class="empty-row">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Serviços Tab ──────────────────────────────── -->
+      <div class="tab-content hidden" id="tab-servicos">
+        <div class="page-header between">
+          <div>
+            <h2>Serviços</h2>
+            <p>Cadastre e edite os serviços do Studio</p>
+          </div>
+          <button class="btn-primary sm" id="btn-new-service">
+            <i data-lucide="plus"></i> Novo Serviço
+          </button>
+        </div>
+
+        <!-- Formulário de Serviço (oculto por padrão) -->
+        <div class="form-card hidden" id="service-form-card">
+          <h3 id="service-form-title">Novo Serviço</h3>
+          <form id="service-form">
+            <input type="hidden" id="service-edit-id">
+            <div class="grid-2">
+              <div class="input-group">
+                <label>Nome do Serviço</label>
+                <input type="text" id="s-nome" placeholder="Ex: Cílios Fio a Fio" required>
+              </div>
+              <div class="input-group">
+                <label>Preço (R$)</label>
+                <input type="number" id="s-preco" step="0.01" placeholder="Ex: 120.00" required>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="input-group">
+                <label>Duração (minutos)</label>
+                <input type="number" id="s-duracao" placeholder="Ex: 60" required>
+              </div>
+              <div class="input-group">
+                <label>Imagem de Capa (URL ou selecione arquivo)</label>
+                <input type="url" id="s-imagem-url" placeholder="https://...imagem.jpg">
+              </div>
+            </div>
+            <div class="input-group">
+              <label>OU Envie uma Imagem do Computador</label>
+              <input type="file" id="s-imagem-file" accept="image/*">
+            </div>
+            <div class="input-group">
+              <label>Descrição</label>
+              <textarea id="s-descricao" rows="3" placeholder="Descreva o procedimento..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-ghost" id="btn-cancel-service">Cancelar</button>
+              <button type="submit" class="btn-primary" id="btn-save-service">
+                <i data-lucide="save"></i> Salvar Serviço
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Imagem</th>
+                  <th>Nome</th>
+                  <th>Preço</th>
+                  <th>Duração</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="servicos-tbody">
+                <tr><td colspan="6" class="empty-row">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Portfólio Tab ─────────────────────────────── -->
+      <div class="tab-content hidden" id="tab-portfolio">
+        <div class="page-header between">
+          <div>
+            <h2>Portfólio (Antes & Depois)</h2>
+            <p>Adicione fotos para exibir no site</p>
+          </div>
+          <button class="btn-primary sm" id="btn-new-portfolio">
+            <i data-lucide="plus"></i> Adicionar Fotos
+          </button>
+        </div>
+
+        <!-- Formulário de Portfólio (oculto) -->
+        <div class="form-card hidden" id="portfolio-form-card">
+          <h3>Adicionar Antes & Depois</h3>
+          <form id="portfolio-form">
+            <div class="input-group">
+              <label>Título da Foto (ex: Extensão de Cílios Clássica)</label>
+              <input type="text" id="p-titulo" placeholder="Ex: Design de Sobrancelha Arco" required>
+            </div>
+            <div class="grid-2">
+              <div class="input-group">
+                <label>Foto ANTES (URL ou arquivo)</label>
+                <input type="url" id="p-antes-url" placeholder="https://...antes.jpg">
+                <input type="file" id="p-antes-file" accept="image/*">
+              </div>
+              <div class="input-group">
+                <label>Foto DEPOIS (URL ou arquivo)</label>
+                <input type="url" id="p-depois-url" placeholder="https://...depois.jpg">
+                <input type="file" id="p-depois-file" accept="image/*">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-ghost" id="btn-cancel-portfolio">Cancelar</button>
+              <button type="submit" class="btn-primary">
+                <i data-lucide="upload"></i> Publicar no Site
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="portfolio-admin-grid" id="portfolio-admin-grid">
+          <div class="empty-portfolio"><i data-lucide="image"></i><p>Nenhuma foto adicionada ainda.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Logs Tab ───────────────────────────────────── -->
+      <div class="tab-content hidden" id="tab-logs">
+        <div class="page-header between">
+          <div>
+            <h2>Logs de Automação</h2>
+            <p>Histórico de eventos do webhook</p>
+          </div>
+          <button class="btn-ghost sm" id="btn-clear-logs">
+            <i data-lucide="trash-2"></i> Limpar Logs
+          </button>
+        </div>
+
+        <div class="terminal-card">
+          <div class="terminal-logs" id="admin-terminal-logs">
+            <p class="empty-row">Carregando logs...</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ─── Toast Notification ──────────────────────────── -->
+  <div id="toast" class="toast hidden">
+    <i data-lucide="check-circle"></i>
+    <span id="toast-msg">Operação realizada!</span>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    let authToken = localStorage.getItem('admin_token');
+    let currentServices = [];
+    let editingServiceId = null;
+
+    // ── Auth Init ──────────────────────────────────────────
+    async function init() {
+      if (!authToken) {
+        showLogin();
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/verify', {
+          headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        if (!res.ok) { logout(); return; }
+        showAdmin();
+      } catch {
+        logout();
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('admin-panel').classList.add('hidden');
+    }
+
+    function showAdmin() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('admin-panel').classList.remove('hidden');
+      lucide.createIcons();
+      loadDashboard();
+    }
+
+    function logout() {
+      localStorage.removeItem('admin_token');
+      authToken = null;
+      showLogin();
+    }
+
+    // ── Login ──────────────────────────────────────────────
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-btn');
+      const errEl = document.getElementById('login-error');
+
+      btn.disabled = true;
+      btn.innerHTML = 'Entrando...';
+      errEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.innerText = data.error || 'Erro ao fazer login.';
+          errEl.classList.remove('hidden');
+        } else {
+          authToken = data.token;
+          localStorage.setItem('admin_token', authToken);
+          document.getElementById('admin-greeting').innerText = `Olá, ${data.username}`;
+          showAdmin();
+        }
+      } catch {
+        errEl.innerText = 'Erro ao conectar ao servidor.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="log-in"></i> Entrar';
+        lucide.createIcons();
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    // ── Tab Navigation ─────────────────────────────────────
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+
+        if (tab === 'dashboard') loadDashboard();
+        else if (tab === 'agendamentos') loadAgendamentos();
+        else if (tab === 'servicos') loadServicos();
+        else if (tab === 'portfolio') loadPortfolio();
+        else if (tab === 'logs') loadLogs();
+      });
+    });
+
+    // ── API Helper ────────────────────────────────────────
+    const apiFetch = (path, options = {}) => fetch(path, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken,
+        ...options.headers
+      }
+    });
+
+    // ── Dashboard ──────────────────────────────────────────
+    async function loadDashboard() {
+      try {
+        const res = await apiFetch('/api/stats');
+        const stats = await res.json();
+        document.getElementById('s-appointments').innerText = stats.totalAppointments;
+        document.getElementById('s-clients').innerText = stats.totalClients;
+        document.getElementById('s-services').innerText = stats.totalServices;
+        document.getElementById('s-revenue').innerText = `R$ ${(stats.revenueSinal || 0).toFixed(2)}`;
+      } catch {}
+
+      // Webhook URL
+      const webhookUrl = window.location.origin + '/api/webhook/agendamento';
+      document.getElementById('webhook-url-display').innerText = webhookUrl;
+    }
+
+    document.getElementById('btn-copy-webhook').addEventListener('click', () => {
+      const url = document.getElementById('webhook-url-display').innerText;
+      navigator.clipboard.writeText(url);
+      showToast('URL copiada para a área de transferência!');
+    });
+
+    // ── Agendamentos ───────────────────────────────────────
+    async function loadAgendamentos() {
+      const tbody = document.getElementById('appointments-tbody');
+      try {
+        const res = await apiFetch('/api/agendamentos');
+        const list = await res.json();
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Nenhum agendamento ainda.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = list.map(a => {
+          const parts = a.data ? a.data.split('-') : [];
+          const dateBr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : a.data;
+          return `
+            <tr>
+              <td><span class="badge-id">#${a.id}</span></td>
+              <td>
+                <div class="td-user">
+                  <strong>${esc(a.cliente_nome)}</strong>
+                  <span>${esc(a.cliente_telefone)}</span>
+                </div>
+              </td>
+              <td><span class="tag-service">${esc(a.servico_nome)}</span></td>
+              <td>${dateBr}</td>
+              <td>${a.hora}</td>
+              <td><span class="pix-badge ${a.status_pix}">${a.status_pix === 'pago' ? 'Pago' : 'Pendente'}</span></td>
+              <td>
+                <button class="btn-icon-danger" onclick="deleteAgendamento(${a.id})">
+                  <i data-lucide="trash-2"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Erro ao carregar.</td></tr>';
+      }
+    }
+
+    async function deleteAgendamento(id) {
+      if (!confirm('Cancelar este agendamento? Esta ação não pode ser desfeita.')) return;
+      await apiFetch(`/api/agendamentos/${id}`, { method: 'DELETE' });
+      loadAgendamentos();
+      showToast('Agendamento cancelado com sucesso.');
+    }
+
+    // ── Serviços ───────────────────────────────────────────
+    async function loadServicos() {
+      const tbody = document.getElementById('servicos-tbody');
+      try {
+        const res = await apiFetch('/api/servicos');
+        currentServices = await res.json();
+
+        if (currentServices.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Nenhum serviço cadastrado.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = currentServices.map(s => `
+          <tr>
+            <td><span class="badge-id">#${s.id}</span></td>
+            <td>
+              <div class="td-thumb" style="background-image: url('${s.imagem || 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=100'}')"></div>
+            </td>
+            <td><strong>${esc(s.nome)}</strong></td>
+            <td>R$ ${s.preco.toFixed(2)}</td>
+            <td>${s.duracao_min} min</td>
+            <td class="action-btns">
+              <button class="btn-icon-edit" onclick="openEditService(${s.id})"><i data-lucide="pencil"></i></button>
+              <button class="btn-icon-danger" onclick="deleteService(${s.id})"><i data-lucide="trash-2"></i></button>
+            </td>
+          </tr>
+        `).join('');
+        lucide.createIcons();
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Erro ao carregar.</td></tr>';
+      }
+    }
+
+    document.getElementById('btn-new-service').addEventListener('click', () => {
+      editingServiceId = null;
+      document.getElementById('service-form-title').innerText = 'Novo Serviço';
+      document.getElementById('service-form').reset();
+      document.getElementById('service-edit-id').value = '';
+      document.getElementById('service-form-card').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-cancel-service').addEventListener('click', () => {
+      document.getElementById('service-form-card').classList.add('hidden');
+    });
+
+    function openEditService(id) {
+      const s = currentServices.find(sv => sv.id === id);
+      if (!s) return;
+      editingServiceId = id;
+      document.getElementById('service-form-title').innerText = 'Editar Serviço';
+      document.getElementById('service-edit-id').value = id;
+      document.getElementById('s-nome').value = s.nome;
+      document.getElementById('s-preco').value = s.preco;
+      document.getElementById('s-duracao').value = s.duracao_min;
+      document.getElementById('s-imagem-url').value = s.imagem || '';
+      document.getElementById('s-descricao').value = s.descricao || '';
+      document.getElementById('service-form-card').classList.remove('hidden');
+      document.getElementById('service-form-card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('service-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-service');
+      btn.disabled = true;
+
+      const file = document.getElementById('s-imagem-file').files[0];
+      let imagemData = document.getElementById('s-imagem-url').value.trim() || null;
+
+      if (file) {
+        imagemData = await fileToBase64(file);
+      }
+
+      const payload = {
+        nome: document.getElementById('s-nome').value.trim(),
+        preco: parseFloat(document.getElementById('s-preco').value),
+        duracao_min: parseInt(document.getElementById('s-duracao').value),
+        descricao: document.getElementById('s-descricao').value.trim(),
+        imagem: imagemData
+      };
+
+      const id = document.getElementById('service-edit-id').value;
+      const url = id ? `/api/servicos/${id}` : '/api/servicos';
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+        if (res.ok) {
+          document.getElementById('service-form-card').classList.add('hidden');
+          document.getElementById('service-form').reset();
+          loadServicos();
+          showToast(id ? 'Serviço atualizado!' : 'Serviço cadastrado!');
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch {
+        alert('Erro ao salvar serviço.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    async function deleteService(id) {
+      if (!confirm('Remover este serviço do sistema?')) return;
+      await apiFetch(`/api/servicos/${id}`, { method: 'DELETE' });
+      loadServicos();
+      showToast('Serviço removido.');
+    }
+
+    // ── Portfólio ──────────────────────────────────────────
+    async function loadPortfolio() {
+      const grid = document.getElementById('portfolio-admin-grid');
+      try {
+        const res = await apiFetch('/api/portfolio');
+        const items = await res.json();
+
+        if (items.length === 0) {
+          grid.innerHTML = '<div class="empty-portfolio"><i data-lucide="image"></i><p>Nenhuma foto adicionada ainda.</p></div>';
+          lucide.createIcons();
+          return;
+        }
+
+        grid.innerHTML = items.map(item => `
+          <div class="portfolio-admin-card">
+            <div class="portfolio-admin-imgs">
+              <div class="padm-img before" style="background-image: url('${item.imagem_antes}')"><span>Antes</span></div>
+              <div class="padm-img after" style="background-image: url('${item.imagem_depois}')"><span>Depois</span></div>
+            </div>
+            <div class="portfolio-admin-footer">
+              <strong>${esc(item.titulo)}</strong>
+              <button class="btn-icon-danger" onclick="deletePortfolioItem(${item.id})">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      } catch {
+        grid.innerHTML = '<p class="empty-row">Erro ao carregar portfólio.</p>';
+      }
+    }
+
+    document.getElementById('btn-new-portfolio').addEventListener('click', () => {
+      document.getElementById('portfolio-form').reset();
+      document.getElementById('portfolio-form-card').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-cancel-portfolio').addEventListener('click', () => {
+      document.getElementById('portfolio-form-card').classList.add('hidden');
+    });
+
+    document.getElementById('portfolio-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.submitter;
+      btn.disabled = true;
+
+      const antesFile = document.getElementById('p-antes-file').files[0];
+      const depoisFile = document.getElementById('p-depois-file').files[0];
+
+      let imagemAntes = document.getElementById('p-antes-url').value.trim();
+      let imagemDepois = document.getElementById('p-depois-url').value.trim();
+
+      if (antesFile) imagemAntes = await fileToBase64(antesFile);
+      if (depoisFile) imagemDepois = await fileToBase64(depoisFile);
+
+      if (!imagemAntes || !imagemDepois) {
+        alert('É necessário fornecer as fotos de Antes e Depois (URL ou arquivo).');
+        btn.disabled = false;
+        return;
+      }
+
+      const payload = {
+        titulo: document.getElementById('p-titulo').value.trim(),
+        imagem_antes: imagemAntes,
+        imagem_depois: imagemDepois
+      };
+
+      try {
+        const res = await apiFetch('/api/portfolio', { method: 'POST', body: JSON.stringify(payload) });
+        if (res.ok) {
+          document.getElementById('portfolio-form-card').classList.add('hidden');
+          document.getElementById('portfolio-form').reset();
+          loadPortfolio();
+          showToast('Fotos publicadas no portfólio!');
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch {
+        alert('Erro ao publicar.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    async function deletePortfolioItem(id) {
+      if (!confirm('Remover esta foto do portfólio?')) return;
+      await apiFetch(`/api/portfolio/${id}`, { method: 'DELETE' });
+      loadPortfolio();
+      showToast('Foto removida do portfólio.');
+    }
+
+    // ── Logs ───────────────────────────────────────────────
+    async function loadLogs() {
+      const container = document.getElementById('admin-terminal-logs');
+      try {
+        const res = await apiFetch('/api/logs');
+        const logs = await res.json();
+
+        if (logs.length === 0) {
+          container.innerHTML = '<p class="empty-row">Nenhum log registrado.</p>';
+          return;
+        }
+
+        container.innerHTML = logs.map(log => `
+          <div class="terminal-row ${log.tipo}">
+            <span class="term-time">[${new Date(log.timestamp).toLocaleTimeString()}]</span>
+            <span class="term-tag">[${log.tipo.toUpperCase()}]</span>
+            <span class="term-msg">${esc(log.mensagem)}</span>
+          </div>
+        `).join('');
+      } catch {
+        container.innerHTML = '<p class="empty-row">Erro ao carregar logs.</p>';
+      }
+    }
+
+    document.getElementById('btn-clear-logs').addEventListener('click', async () => {
+      if (!confirm('Limpar todos os logs?')) return;
+      await apiFetch('/api/logs', { method: 'DELETE' });
+      loadLogs();
+      showToast('Logs limpos com sucesso.');
+    });
+
+    // ── Utilities ──────────────────────────────────────────
+    function esc(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function showToast(msg, duration = 3000) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('hidden');
+      lucide.createIcons();
+      setTimeout(() => toast.classList.add('hidden'), duration);
+    }
+
+    // Boot
+    init();
+  </script>
+</body>
+</html>
