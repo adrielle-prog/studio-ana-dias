@@ -3,15 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Studio Ana Dias - Agendamento e Beleza</title>
+  <title>Studio Ana Dias - Agendamento e Beleza de Alto Padrão</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Outfit, Inter e Playfair Display (para o toque de luxo serifado) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-  <div class="glass-bg"></div>
+  <!-- Efeito Parallax de Fundo -->
+  <div class="glass-bg">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
 
   <!-- Navbar -->
   <header class="app-header client-nav">
@@ -19,12 +25,13 @@
       <div class="logo-circle">AD</div>
       <div>
         <h1>Studio Ana Dias</h1>
-        <p class="subtitle">Realçando sua beleza natural</p>
+        <p class="subtitle">Estética &amp; Cílios de Luxo</p>
       </div>
     </div>
     <div class="nav-links">
       <a href="#portfolio">Portfólio</a>
       <a href="#servicos" class="nav-btn-highlight">Ver Serviços</a>
+      <a href="#faq">Perguntas</a>
       <a href="/admin" class="nav-admin-link"><i data-lucide="lock" style="width:14px;display:inline;vertical-align:middle;"></i> Admin</a>
     </div>
   </header>
@@ -34,10 +41,13 @@
     <!-- Hero -->
     <section class="hero-section">
       <div class="hero-content">
-        <span class="hero-badge">🌸 Beleza &amp; Estilo</span>
-        <h2>Sinta-se única, sinta-se radiante.</h2>
-        <p>Agende seu horário com pagamento antecipado simplificado via Pix. Procedimentos modernos de cílios, sobrancelhas e estética geral.</p>
-        <a href="#servicos" class="btn-hero"><i data-lucide="calendar"></i> Agendar Agora</a>
+        <span class="hero-badge">🌸 Realçando Seu Olhar &amp; Autoestima</span>
+        <h2>Sinta-se <span class="serif-title">única</span>, sinta-se <span class="gradient-text">radiante</span>.</h2>
+        <p>Agende sua experiência com pagamento antecipado simplificado via Pix. Procedimentos modernos e exclusivos feitos para elevar sua beleza natural.</p>
+        <div class="hero-actions">
+          <a href="#servicos" class="btn-hero"><i data-lucide="calendar"></i> Agendar Agora</a>
+          <a href="#portfolio" class="btn-secondary-link">Ver Resultados <i data-lucide="arrow-right"></i></a>
+        </div>
       </div>
       <div class="hero-visual">
         <div class="visual-glow-circle"></div>
@@ -47,7 +57,8 @@
           </div>
           <div class="visual-body">
             <div class="client-testimonial">
-              <p>"O melhor design de sobrancelha que já fiz na vida! Atendimento impecável e agendamento super rápido."</p>
+              <div class="stars"><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i><i data-lucide="star"></i></div>
+              <p>"O melhor design de sobrancelha que já fiz! Atendimento impecável e o agendamento no site é rápido demais."</p>
               <div class="testimonial-author">
                 <div class="author-avatar">M</div>
                 <div><strong>Mariana Souza</strong><span>Cliente Recorrente</span></div>
@@ -59,8 +70,9 @@
     </section>
 
     <!-- Portfolio Antes & Depois -->
-    <section id="portfolio" class="client-section">
+    <section id="portfolio" class="client-section reveal">
       <div class="section-title-container">
+        <span class="section-subtitle">Galeria Real</span>
         <h2>Antes &amp; Depois</h2>
         <p>Veja os resultados reais de nossas clientes e apaixone-se pelo processo.</p>
       </div>
@@ -77,8 +89,9 @@
     </section>
 
     <!-- Serviços -->
-    <section id="servicos" class="client-section">
+    <section id="servicos" class="client-section reveal">
       <div class="section-title-container">
+        <span class="section-subtitle">Menu de Procedimentos</span>
         <h2>Nossos Serviços</h2>
         <p>Selecione o procedimento ideal para você e reserve seu horário.</p>
       </div>
@@ -87,7 +100,65 @@
       </div>
     </section>
 
+    <!-- FAQ Seção -->
+    <section id="faq" class="client-section reveal">
+      <div class="section-title-container">
+        <span class="section-subtitle">Dúvidas Frequentes</span>
+        <h2>Perguntas Frequentes</h2>
+        <p>Tudo o que você precisa saber sobre o agendamento e os procedimentos.</p>
+      </div>
+      <div class="faq-accordion-container">
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Como funciona a confirmação via Pix de sinal?</span>
+            <i data-lucide="plus" class="faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <p>Para reservar a vaga, solicitamos um sinal equivalente a 20% do valor do serviço via Pix. O valor restante (80%) é pago no estúdio após a realização do procedimento. O agendamento é bloqueado imediatamente após a confirmação do Pix no final da reserva.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Posso reagendar ou cancelar meu horário?</span>
+            <i data-lucide="plus" class="faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <p>Sim! Reagendamentos ou cancelamentos com direito a manutenção do sinal pago podem ser feitos com até 24 horas de antecedência, entrando em contato diretamente pelo nosso WhatsApp.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Quanto tempo dura uma extensão de cílios?</span>
+            <i data-lucide="plus" class="faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <p>A extensão de cílios dura em média de 30 a 45 dias, acompanhando o ciclo natural de crescimento dos seus fios. No entanto, para mantê-los sempre volumosos e bonitos, recomendamos fazer a manutenção a cada 15 ou 20 dias.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>O que devo fazer para me preparar para a sessão?</span>
+            <i data-lucide="plus" class="faq-icon"></i>
+          </div>
+          <div class="faq-answer">
+            <p>Recomendamos que venha com a região dos olhos e rosto limpos, sem rímel, maquiagem ou cremes oleosos. Isso melhora a aderência da cola e garante maior durabilidade do seu procedimento.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div><!-- /app-container -->
+
+  <!-- Footer -->
+  <footer class="app-footer-page">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <div class="logo-circle">AD</div>
+        <h3>Studio Ana Dias</h3>
+      </div>
+      <p>© 2026 Studio Ana Dias. Todos os direitos reservados. Design de Luxo.</p>
+    </div>
+  </footer>
 
   <!-- ──────────── MODAL ──────────── -->
   <div class="modal-overlay hidden" id="booking-modal">
@@ -235,6 +306,51 @@
     let selectedDate     = null; // 'YYYY-MM-DD'
     let selectedHora     = null; // 'HH:MM'
     let currentWeekStart = null; // 'YYYY-MM-DD'
+
+    // ── Efeito Parallax nos Orbes ──────────────────────────────────────────
+    window.addEventListener('mousemove', (e) => {
+      const orbs = document.querySelectorAll('.glow-orb');
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      
+      orbs.forEach((orb, i) => {
+        const factor = (i + 1) * 15;
+        const dx = (x - 0.5) * factor;
+        const dy = (y - 0.5) * factor;
+        orb.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+    });
+
+    // ── Efeito de Revelação On-scroll (Scroll Reveal) ──────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── Accordion FAQ ──────────────────────────────────────────────────────
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        const item = q.parentElement;
+        const isActive = item.classList.contains('active');
+        
+        document.querySelectorAll('.faq-item').forEach(i => {
+          i.classList.remove('active');
+          const icon = i.querySelector('.faq-icon');
+          if (icon) icon.setAttribute('data-lucide', 'plus');
+        });
+
+        if (!isActive) {
+          item.classList.add('active');
+          q.querySelector('.faq-icon').setAttribute('data-lucide', 'minus');
+        }
+        lucide.createIcons();
+      });
+    });
 
     // ── Serviços ──────────────────────────────────────────────────────────
     async function fetchServices() {
@@ -542,6 +658,11 @@
     fetchServices();
     fetchPortfolio();
     setTimeout(setupBeforeAfterSliders, 800);
+    
+    // Configurar observadores de animação no boot posterior
+    setTimeout(() => {
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }, 1200);
   </script>
 </body>
 </html>
