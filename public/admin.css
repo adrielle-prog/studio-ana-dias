@@ -512,6 +512,56 @@ input:focus, select:focus, textarea:focus {
 
 textarea { resize: vertical; min-height: 80px; }
 
+/* Dropzone de upload interativo */
+.file-dropzone {
+  border: 2px dashed rgba(157, 78, 221, 0.4);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-dropzone:hover {
+  border-color: var(--purple);
+  background: rgba(157, 78, 221, 0.05);
+}
+
+.file-dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-dropzone i {
+  color: var(--purple);
+  width: 32px;
+  height: 32px;
+}
+
+.file-dropzone p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.file-preview {
+  margin-top: 0.75rem;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border);
+  display: none;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

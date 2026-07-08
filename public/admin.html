@@ -301,13 +301,18 @@
                 <input type="number" id="s-duracao" placeholder="Ex: 60" required>
               </div>
               <div class="input-group">
-                <label>Imagem de Capa (URL ou selecione arquivo)</label>
+                <label>Imagem de Capa (URL externa se preferir)</label>
                 <input type="url" id="s-imagem-url" placeholder="https://...imagem.jpg">
               </div>
             </div>
             <div class="input-group">
-              <label>OU Envie uma Imagem do Computador</label>
-              <input type="file" id="s-imagem-file" accept="image/*">
+              <label>OU Clique na área abaixo para enviar do Computador</label>
+              <div class="file-dropzone" id="s-dropzone">
+                <i data-lucide="upload-cloud"></i>
+                <p>Clique ou arraste um arquivo de imagem aqui</p>
+                <input type="file" id="s-imagem-file" accept="image/*">
+              </div>
+              <div class="file-preview" id="s-preview"></div>
             </div>
             <div class="input-group">
               <label>Descrição</label>
@@ -365,14 +370,24 @@
             </div>
             <div class="grid-2">
               <div class="input-group">
-                <label>Foto ANTES (URL ou arquivo)</label>
-                <input type="url" id="p-antes-url" placeholder="https://...antes.jpg">
-                <input type="file" id="p-antes-file" accept="image/*">
+                <label>Foto ANTES (Computador ou Celular)</label>
+                <div class="file-dropzone" id="p-antes-dropzone">
+                  <i data-lucide="image"></i>
+                  <p>Enviar foto ANTES</p>
+                  <input type="file" id="p-antes-file" accept="image/*">
+                </div>
+                <div class="file-preview" id="p-antes-preview"></div>
+                <input type="url" id="p-antes-url" placeholder="OU cole um link da foto" style="margin-top: 0.5rem;">
               </div>
               <div class="input-group">
-                <label>Foto DEPOIS (URL ou arquivo)</label>
-                <input type="url" id="p-depois-url" placeholder="https://...depois.jpg">
-                <input type="file" id="p-depois-file" accept="image/*">
+                <label>Foto DEPOIS (Computador ou Celular)</label>
+                <div class="file-dropzone" id="p-depois-dropzone">
+                  <i data-lucide="image"></i>
+                  <p>Enviar foto DEPOIS</p>
+                  <input type="file" id="p-depois-file" accept="image/*">
+                </div>
+                <div class="file-preview" id="p-depois-preview"></div>
+                <input type="url" id="p-depois-url" placeholder="OU cole um link da foto" style="margin-top: 0.5rem;">
               </div>
             </div>
             <div class="form-actions">
@@ -1028,8 +1043,68 @@
       setTimeout(() => toast.classList.add('hidden'), duration);
     }
 
+    // ── Listeners de Previews e Dropzone de Arquivos ───────────────────────
+    function setupFilePreviews() {
+      const inputs = [
+        { fileId: 's-imagem-file', previewId: 's-preview' },
+        { fileId: 'p-antes-file', previewId: 'p-antes-preview' },
+        { fileId: 'p-depois-file', previewId: 'p-depois-preview' }
+      ];
+
+      inputs.forEach(({ fileId, previewId }) => {
+        const input = document.getElementById(fileId);
+        const preview = document.getElementById(previewId);
+
+        if (input && preview) {
+          input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (evt) => {
+                preview.style.backgroundImage = `url('${evt.target.result}')`;
+                preview.style.display = 'block';
+              };
+              reader.readAsDataURL(file);
+            } else {
+              preview.style.display = 'none';
+              preview.style.backgroundImage = '';
+            }
+          });
+        }
+      });
+    }
+
+    // Adaptar reset e openEditService para carregar/remover previews
+    const originalResetServiceForm = document.getElementById('btn-new-service').addEventListener;
+    // Interceptar cliques para limpar previews
+    document.getElementById('btn-new-service').addEventListener('click', () => {
+      document.getElementById('s-preview').style.display = 'none';
+      document.getElementById('s-preview').style.backgroundImage = '';
+    });
+    document.getElementById('btn-new-portfolio').addEventListener('click', () => {
+      document.getElementById('p-antes-preview').style.display = 'none';
+      document.getElementById('p-antes-preview').style.backgroundImage = '';
+      document.getElementById('p-depois-preview').style.display = 'none';
+      document.getElementById('p-depois-preview').style.backgroundImage = '';
+    });
+
+    // Injetar preview ao editar serviço existente
+    const originalOpenEditService = openEditService;
+    openEditService = function(id) {
+      originalOpenEditService(id);
+      const s = currentServices.find(sv => sv.id === id);
+      const preview = document.getElementById('s-preview');
+      if (s && s.imagem) {
+        preview.style.backgroundImage = `url('${s.imagem}')`;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
+    };
+
     // Boot
     init();
+    setupFilePreviews();
   </script>
 </body>
 </html>
