@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: studio-ana-dias-api
+    name: studiojuliadias
     env: node
     buildCommand: npm install
     startCommand: npm start

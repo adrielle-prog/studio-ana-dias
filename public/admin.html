@@ -35,6 +35,9 @@
           <i data-lucide="log-in"></i> Entrar
         </button>
       </form>
+      <button class="login-forgot-link" id="btn-open-change-pwd" type="button">
+        <i data-lucide="key-round"></i> Alterar Senha
+      </button>
       <a href="/" class="login-back-link"><i data-lucide="arrow-left"></i> Voltar ao site</a>
     </div>
   </div>
@@ -70,6 +73,9 @@
         </button>
         <button class="nav-item" data-tab="logs">
           <i data-lucide="terminal"></i> Logs
+        </button>
+        <button class="nav-item" data-tab="configuracoes">
+          <i data-lucide="settings-2"></i> Configurações
         </button>
       </nav>
 
@@ -423,6 +429,158 @@
         </div>
       </div>
 
+      <!-- ── Configurações Tab ──────────────────────────── -->
+      <div class="tab-content hidden" id="tab-configuracoes">
+        <div class="page-header">
+          <h2>Configurações</h2>
+          <p>Gerencie os dados de pagamento Pix do Studio</p>
+        </div>
+
+        <div class="form-card" style="max-width:680px;">
+          <h3 style="display:flex;align-items:center;gap:.6rem;">
+            <span style="background:linear-gradient(135deg,rgba(0,229,196,.2),rgba(0,229,196,.08));border:1px solid rgba(0,229,196,.3);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--green);"><i data-lucide="qr-code"></i></span>
+            Configurações Pix
+          </h3>
+          <p style="font-size:.8rem;color:var(--text-secondary);margin:.5rem 0 1.25rem;">Atualize o código Pix (payload EMV) sempre que precisar trocar a chave ou o banco.</p>
+
+          <!-- Preview do QR atual -->
+          <div id="pix-admin-preview" style="display:flex;align-items:center;gap:1.5rem;background:rgba(0,229,196,.05);border:1px solid rgba(0,229,196,.2);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+            <img id="pix-admin-qr" src="" alt="QR Code atual" style="width:100px;height:100px;border-radius:10px;flex-shrink:0;">
+            <div style="min-width:0;">
+              <p style="font-size:.72rem;color:var(--text-secondary);margin-bottom:.2rem;">Beneficiária</p>
+              <strong id="pix-admin-nome" style="font-size:.95rem;">Carregando...</strong>
+              <p style="font-size:.72rem;color:var(--text-secondary);margin-top:.4rem;margin-bottom:.2rem;">Chave / Telefone</p>
+              <code id="pix-admin-chave" style="font-size:.8rem;color:var(--green);">—</code>
+            </div>
+          </div>
+
+          <form id="pix-config-form">
+            <div class="input-group">
+              <label><i data-lucide="qr-code"></i> Código Pix Completo (Payload EMV)</label>
+              <textarea id="pix-cfg-payload" rows="4" placeholder="Cole aqui o código Pix completo (começa com 000201...)"></textarea>
+            </div>
+            <div class="grid-2">
+              <div class="input-group">
+                <label><i data-lucide="user"></i> Nome do Beneficiário</label>
+                <input type="text" id="pix-cfg-nome" placeholder="Ex: Ana Julia Santos Dias">
+              </div>
+              <div class="input-group">
+                <label><i data-lucide="smartphone"></i> Chave Pix (Telefone/CPF/Email)</label>
+                <input type="text" id="pix-cfg-chave" placeholder="Ex: 50625751841">
+              </div>
+            </div>
+            <button type="submit" class="btn-primary sm" style="margin-top:.5rem;">
+              <i data-lucide="save"></i> Salvar Configurações Pix
+            </button>
+          </form>
+        </div>
+
+        <div class="form-card" style="max-width:680px; margin-top: 1.5rem;">
+          <h3 style="display:flex;align-items:center;gap:.6rem;">
+            <span style="background:linear-gradient(135deg,rgba(157, 78, 221, 0.2),rgba(157, 78, 221, 0.08));border:1px solid rgba(157, 78, 221, 0.3);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--purple);"><i data-lucide="shield-check"></i></span>
+            Conta do Administrador
+          </h3>
+          <p style="font-size:.8rem;color:var(--text-secondary);margin:.5rem 0 1.25rem;">Gerencie o e-mail de recuperação e configurações da sua conta de administrador.</p>
+
+          <form id="admin-profile-form">
+            <div class="grid-2">
+              <div class="input-group">
+                <label><i data-lucide="user"></i> Usuário Administrador</label>
+                <input type="text" id="admin-cfg-username" readonly style="opacity: 0.65; cursor: not-allowed;">
+              </div>
+              <div class="input-group">
+                <label><i data-lucide="mail"></i> E-mail de Recuperação</label>
+                <input type="email" id="admin-cfg-email" placeholder="Ex: seu-email@icloud.com" required>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary sm" style="margin-top:.5rem;">
+              <i data-lucide="save"></i> Salvar Informações da Conta
+            </button>
+          </form>
+        </div>
+
+        <div class="form-card" style="max-width:680px; margin-top: 1.5rem;">
+          <h3 style="display:flex;align-items:center;gap:.6rem;">
+            <span style="background:linear-gradient(135deg,rgba(255, 71, 126, 0.2),rgba(255, 71, 126, 0.08));border:1px solid rgba(255, 71, 126, 0.3);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--pink);"><i data-lucide="key-round"></i></span>
+            Alterar Senha do Administrador
+          </h3>
+          <p style="font-size:.8rem;color:var(--text-secondary);margin:.5rem 0 1.25rem;">Recomendamos alterar sua senha periodicamente para manter a segurança do painel.</p>
+
+          <form id="admin-change-password-form">
+            <div class="input-group">
+              <label for="ac-current"><i data-lucide="lock"></i> Senha Atual</label>
+              <div class="pwd-field-wrap">
+                <input type="password" id="ac-current" placeholder="••••••••" required>
+                <button type="button" class="btn-toggle-pwd" data-target="ac-current" aria-label="Mostrar/ocultar senha">
+                  <i data-lucide="eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="grid-2" style="margin-top: 0.75rem;">
+              <div class="input-group">
+                <label for="ac-new"><i data-lucide="lock-keyhole"></i> Nova Senha</label>
+                <div class="pwd-field-wrap">
+                  <input type="password" id="ac-new" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                  <button type="button" class="btn-toggle-pwd" data-target="ac-new" aria-label="Mostrar/ocultar senha">
+                    <i data-lucide="eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="input-group">
+                <label for="ac-confirm"><i data-lucide="shield"></i> Confirmar Nova Senha</label>
+                <div class="pwd-field-wrap">
+                  <input type="password" id="ac-confirm" placeholder="Repita a nova senha" minlength="6" required>
+                  <button type="button" class="btn-toggle-pwd" data-target="ac-confirm" aria-label="Mostrar/ocultar senha">
+                    <i data-lucide="eye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div id="ac-pwd-error" class="error-msg hidden" style="margin-top: 1rem;"></div>
+            <div id="ac-pwd-success" class="success-msg hidden" style="margin-top: 1rem;"></div>
+
+            <button type="submit" class="btn-primary sm" style="margin-top:1.25rem;">
+              <i data-lucide="save"></i> Atualizar Senha
+            </button>
+          </form>
+        </div>
+
+        <div class="form-card" style="max-width:680px; margin-top: 1.5rem;">
+          <h3 style="display:flex;align-items:center;gap:.6rem;">
+            <span style="background:linear-gradient(135deg,rgba(0, 229, 196, 0.2),rgba(0, 229, 196, 0.08));border:1px solid rgba(0, 229, 196, 0.3);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--green);"><i data-lucide="image"></i></span>
+            Fotos do "Sobre Mim"
+          </h3>
+          <p style="font-size:.8rem;color:var(--text-secondary);margin:.5rem 0 1.25rem;">Envie fotos do seu computador para atualizar a sua foto pessoal e a foto do seu trabalho no site.</p>
+
+          <form id="sobre-fotos-form">
+            <div class="grid-2">
+              <div class="input-group">
+                <label>Sua Foto Pessoal</label>
+                <div class="file-dropzone" id="sf-pessoal-dropzone">
+                  <i data-lucide="user"></i>
+                  <p>Enviar nova Foto Pessoal</p>
+                  <input type="file" id="sf-pessoal-file" accept="image/*">
+                </div>
+                <div class="file-preview" id="sf-pessoal-preview"></div>
+              </div>
+              <div class="input-group">
+                <label>Foto do seu Trabalho (Cílios)</label>
+                <div class="file-dropzone" id="sf-trabalho-dropzone">
+                  <i data-lucide="sparkles"></i>
+                  <p>Enviar Foto do Trabalho</p>
+                  <input type="file" id="sf-trabalho-file" accept="image/*">
+                </div>
+                <div class="file-preview" id="sf-trabalho-preview"></div>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary sm" style="margin-top:1.25rem;">
+              <i data-lucide="upload"></i> Salvar Novas Fotos
+            </button>
+          </form>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -430,6 +588,62 @@
   <div id="toast" class="toast hidden">
     <i data-lucide="check-circle"></i>
     <span id="toast-msg">Operação realizada!</span>
+  </div>
+
+  <!-- ─── Change Password Modal ───────────────────────── -->
+  <div id="change-pwd-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon"><i data-lucide="shield-check"></i></div>
+        <div>
+          <h3 id="modal-title">Alterar Senha</h3>
+          <p>Preencha os campos para redefinir sua senha de acesso.</p>
+        </div>
+        <button class="modal-close" id="btn-close-change-pwd" aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="change-pwd-form">
+        <div class="input-group">
+          <label for="cp-current"><i data-lucide="lock"></i> Senha Atual</label>
+          <div class="pwd-field-wrap">
+            <input type="password" id="cp-current" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="btn-toggle-pwd" data-target="cp-current" aria-label="Mostrar/ocultar senha">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="cp-new"><i data-lucide="lock-keyhole"></i> Nova Senha</label>
+          <div class="pwd-field-wrap">
+            <input type="password" id="cp-new" placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="new-password" required>
+            <button type="button" class="btn-toggle-pwd" data-target="cp-new" aria-label="Mostrar/ocultar senha">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="cp-confirm"><i data-lucide="shield"></i> Confirmar Nova Senha</label>
+          <div class="pwd-field-wrap">
+            <input type="password" id="cp-confirm" placeholder="Repita a nova senha" minlength="6" autocomplete="new-password" required>
+            <button type="button" class="btn-toggle-pwd" data-target="cp-confirm" aria-label="Mostrar/ocultar senha">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="change-pwd-error" class="error-msg hidden"></div>
+        <div id="change-pwd-success" class="success-msg hidden"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="btn-cancel-change-pwd">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-submit-change-pwd">
+            <i data-lucide="save"></i> Salvar Nova Senha
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -532,6 +746,7 @@
         else if (tab === 'servicos') loadServicos();
         else if (tab === 'portfolio') loadPortfolio();
         else if (tab === 'logs') loadLogs();
+        else if (tab === 'configuracoes') { loadPixConfig(); loadSobreFotos(); }
       });
     });
 
@@ -1101,6 +1316,342 @@
         preview.style.display = 'none';
       }
     };
+
+    // ── Fotos do Sobre Mim ────────────────────────────────────────────────
+    let sobreBase64Pessoal  = null;
+    let sobreBase64Trabalho = null;
+
+    function setupSobreFotoPreview(fileInputId, previewId, varRef) {
+      const input   = document.getElementById(fileInputId);
+      const preview = document.getElementById(previewId);
+      if (!input || !preview) return;
+
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const dataUrl = evt.target.result;
+          preview.style.backgroundImage = `url('${dataUrl}')`;
+          preview.style.display = 'block';
+          // Guardar Base64 para envio
+          if (fileInputId === 'sf-pessoal-file')  sobreBase64Pessoal  = dataUrl;
+          if (fileInputId === 'sf-trabalho-file') sobreBase64Trabalho = dataUrl;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Inicializar previews de file inputs do Sobre Mim
+    setupSobreFotoPreview('sf-pessoal-file',  'sf-pessoal-preview');
+    setupSobreFotoPreview('sf-trabalho-file', 'sf-trabalho-preview');
+
+    // Carregar fotos atuais como preview ao abrir a aba
+    async function loadSobreFotos() {
+      try {
+        const res  = await fetch('/api/sobre-fotos');
+        const data = await res.json();
+        if (data.fotoPessoal) {
+          const p = document.getElementById('sf-pessoal-preview');
+          p.style.backgroundImage = `url('${data.fotoPessoal}')`;
+          p.style.display = 'block';
+        }
+        if (data.fotoTrabalho) {
+          const p = document.getElementById('sf-trabalho-preview');
+          p.style.backgroundImage = `url('${data.fotoTrabalho}')`;
+          p.style.display = 'block';
+        }
+      } catch { /* silencioso */ }
+    }
+
+    // Submit: salvar novas fotos
+    document.getElementById('sobre-fotos-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!sobreBase64Pessoal && !sobreBase64Trabalho) {
+        alert('Selecione ao menos uma foto para atualizar.');
+        return;
+      }
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-circle"></i> Salvando...';
+      lucide.createIcons();
+
+      try {
+        const body = {};
+        if (sobreBase64Pessoal)  body.fotoPessoal  = sobreBase64Pessoal;
+        if (sobreBase64Trabalho) body.fotoTrabalho = sobreBase64Trabalho;
+
+        const res = await apiFetch('/api/sobre-fotos', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+          showToast('Fotos do Sobre Mim atualizadas com sucesso!');
+          sobreBase64Pessoal  = null;
+          sobreBase64Trabalho = null;
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Erro ao salvar fotos.');
+        }
+      } catch {
+        alert('Erro de conexão ao salvar fotos.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="upload"></i> Salvar Novas Fotos';
+        lucide.createIcons();
+      }
+    });
+
+    // ── Configurações Pix & Perfil ────────────────────────────────────────
+    async function loadPixConfig() {
+      // 1. Carregar Pix
+      try {
+        const res = await fetch('/api/pix');
+        const pix = await res.json();
+        // Preview
+        document.getElementById('pix-admin-nome').innerText  = pix.nome  || '—';
+        document.getElementById('pix-admin-chave').innerText = pix.chave || '—';
+        const qrUrl = pix.payload
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(pix.payload)}`
+          : '';
+        document.getElementById('pix-admin-qr').src = qrUrl;
+        // Preencher form
+        document.getElementById('pix-cfg-payload').value = pix.payload || '';
+        document.getElementById('pix-cfg-nome').value    = pix.nome    || '';
+        document.getElementById('pix-cfg-chave').value   = pix.chave   || '';
+      } catch {
+        showToast('Erro ao carregar configurações Pix.');
+      }
+
+      // 2. Carregar Perfil Admin
+      try {
+        const res = await apiFetch('/api/admin/profile');
+        if (res.ok) {
+          const profile = await res.json();
+          document.getElementById('admin-cfg-username').value = profile.username;
+          document.getElementById('admin-cfg-email').value    = profile.email || '';
+        }
+      } catch (err) {
+        console.error('Erro ao carregar perfil:', err);
+      }
+    }
+
+    document.getElementById('pix-config-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = document.getElementById('pix-cfg-payload').value.trim();
+      const nome    = document.getElementById('pix-cfg-nome').value.trim();
+      const chave   = document.getElementById('pix-cfg-chave').value.trim();
+
+      if (!payload) {
+        alert('O código Pix (payload) é obrigatório.');
+        return;
+      }
+
+      try {
+        const res = await apiFetch('/api/pix', {
+          method: 'POST',
+          body: JSON.stringify({ payload, nome, chave })
+        });
+        if (res.ok) {
+          showToast('Configurações Pix salvas com sucesso!');
+          loadPixConfig(); // atualizar preview
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Erro ao salvar.');
+        }
+      } catch {
+        alert('Erro de conexão.');
+      }
+    });
+
+    document.getElementById('admin-profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('admin-cfg-email').value.trim();
+
+      try {
+        const res = await apiFetch('/api/admin/profile', {
+          method: 'POST',
+          body: JSON.stringify({ email })
+        });
+        if (res.ok) {
+          showToast('E-mail de recuperação atualizado!');
+          loadPixConfig();
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Erro ao atualizar.');
+        }
+      } catch {
+        alert('Erro de conexão ao salvar perfil.');
+      }
+    });
+
+    // Submit alteração de senha na aba de configurações
+    document.getElementById('admin-change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const errEl = document.getElementById('ac-pwd-error');
+      const succEl = document.getElementById('ac-pwd-success');
+      errEl.classList.add('hidden');
+      succEl.classList.add('hidden');
+
+      const currentPassword = document.getElementById('ac-current').value;
+      const newPassword     = document.getElementById('ac-new').value;
+      const confirmPassword = document.getElementById('ac-confirm').value;
+
+      if (newPassword.length < 6) {
+        errEl.innerText = 'A nova senha deve ter pelo menos 6 caracteres.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        errEl.innerText = 'As senhas não coincidem. Verifique e tente novamente.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i data-lucide="loader-circle"></i> Atualizando...';
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/admin/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errEl.innerText = data.error || 'Erro ao alterar a senha.';
+          errEl.classList.remove('hidden');
+        } else {
+          succEl.innerText = '✓ Senha alterada com sucesso!';
+          succEl.classList.remove('hidden');
+          document.getElementById('admin-change-password-form').reset();
+          showToast('Senha alterada com sucesso!');
+        }
+      } catch {
+        errEl.innerText = 'Erro ao se conectar ao servidor.';
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i data-lucide="save"></i> Atualizar Senha';
+        lucide.createIcons();
+      }
+    });
+
+    // ── Change Password Modal ──────────────────────────────
+    const changePwdOverlay = document.getElementById('change-pwd-overlay');
+    const changePwdForm   = document.getElementById('change-pwd-form');
+    const changePwdError  = document.getElementById('change-pwd-error');
+    const changePwdSuccess = document.getElementById('change-pwd-success');
+
+    function openChangePwd() {
+      changePwdForm.reset();
+      changePwdError.classList.add('hidden');
+      changePwdSuccess.classList.add('hidden');
+      changePwdOverlay.classList.remove('hidden');
+      lucide.createIcons();
+      document.getElementById('cp-current').focus();
+    }
+
+    function closeChangePwd() {
+      changePwdOverlay.classList.add('hidden');
+    }
+
+    document.getElementById('btn-open-change-pwd').addEventListener('click', openChangePwd);
+    document.getElementById('btn-close-change-pwd').addEventListener('click', closeChangePwd);
+    document.getElementById('btn-cancel-change-pwd').addEventListener('click', closeChangePwd);
+
+    // Close on backdrop click
+    changePwdOverlay.addEventListener('click', (e) => {
+      if (e.target === changePwdOverlay) closeChangePwd();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !changePwdOverlay.classList.contains('hidden')) closeChangePwd();
+    });
+
+    // Toggle password visibility
+    document.querySelectorAll('.btn-toggle-pwd').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.target;
+        const input = document.getElementById(targetId);
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        btn.querySelector('i').setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+        lucide.createIcons();
+      });
+    });
+
+    // Submit change password
+    changePwdForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('btn-submit-change-pwd');
+      changePwdError.classList.add('hidden');
+      changePwdSuccess.classList.add('hidden');
+
+      const currentPassword = document.getElementById('cp-current').value;
+      const newPassword     = document.getElementById('cp-new').value;
+      const confirmPassword = document.getElementById('cp-confirm').value;
+
+      if (newPassword.length < 6) {
+        changePwdError.innerText = 'A nova senha deve ter pelo menos 6 caracteres.';
+        changePwdError.classList.remove('hidden');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        changePwdError.innerText = 'As senhas não coincidem. Verifique e tente novamente.';
+        changePwdError.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i data-lucide="loader-circle"></i> Salvando...';
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/admin/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          changePwdError.innerText = data.error || 'Erro ao alterar senha.';
+          changePwdError.classList.remove('hidden');
+        } else {
+          changePwdSuccess.innerText = '✓ Senha alterada com sucesso! Use a nova senha no próximo login.';
+          changePwdSuccess.classList.remove('hidden');
+          changePwdForm.reset();
+          showToast('Senha alterada com sucesso!');
+          setTimeout(closeChangePwd, 2500);
+        }
+      } catch {
+        changePwdError.innerText = 'Erro de conexão. Tente novamente.';
+        changePwdError.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i data-lucide="save"></i> Salvar Nova Senha';
+        lucide.createIcons();
+      }
+    });
 
     // Boot
     init();

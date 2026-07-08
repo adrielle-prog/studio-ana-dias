@@ -99,7 +99,7 @@ h1,h2,h3 { font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: 
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   color: var(--text-secondary);
   font-size: 0.8rem;
   text-decoration: none;
@@ -107,6 +107,27 @@ h1,h2,h3 { font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: 
 }
 
 .login-back-link:hover { color: var(--text-primary); }
+
+.login-forgot-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  color: var(--purple);
+  font-size: 0.82rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: var(--transition);
+  padding: 0;
+}
+
+.login-forgot-link:hover {
+  color: var(--pink);
+  text-shadow: 0 0 8px rgba(255, 71, 126, 0.3);
+}
 
 /* ── Admin Panel Layout ──────────── */
 #admin-panel {
@@ -794,3 +815,145 @@ textarea { resize: vertical; min-height: 80px; }
   height: 14px;
 }
 
+
+/* ── Change Password Modal ───────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(8, 5, 16, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.hidden { display: none; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-card {
+  background: linear-gradient(135deg, rgba(22, 14, 35, 0.98) 0%, rgba(16, 10, 26, 0.98) 100%);
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 460px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(157,78,221,0.1),
+    0 20px 60px rgba(0,0,0,0.6),
+    0 0 60px rgba(157,78,221,0.08);
+  animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(157,78,221,0.25), rgba(255,71,126,0.15));
+  border: 1px solid rgba(157,78,221,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--purple);
+}
+
+.modal-icon svg { width: 20px; height: 20px; }
+
+.modal-header > div:nth-child(2) { flex: 1; }
+.modal-header h3 { font-size: 1.1rem; margin-bottom: 0.2rem; }
+.modal-header p  { font-size: 0.78rem; color: var(--text-secondary); }
+
+.modal-close {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.modal-close svg { width: 14px; height: 14px; }
+
+/* Password field with show/hide toggle */
+.pwd-field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pwd-field-wrap input {
+  padding-right: 3rem;
+  width: 100%;
+}
+
+.btn-toggle-pwd {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  transition: var(--transition);
+  border-radius: 6px;
+}
+
+.btn-toggle-pwd:hover { color: var(--text-primary); }
+.btn-toggle-pwd svg   { width: 16px; height: 16px; }
+
+/* Modal actions row */
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* Success message */
+.success-msg {
+  background: rgba(0, 229, 196, 0.1);
+  border: 1px solid rgba(0, 229, 196, 0.3);
+  border-radius: 10px;
+  color: var(--green);
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  margin-top: 0.75rem;
+  animation: fadeIn 0.2s ease;
+}

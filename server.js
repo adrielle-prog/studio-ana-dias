@@ -65,6 +65,136 @@ app.get('/api/admin/verify', authenticateAdmin, (req, res) => {
   res.json({ valid: true });
 });
 
+// Alterar senha de administrador (logado via JWT)
+app.post('/api/admin/change-password', authenticateAdmin, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Senha atual e nova senha são obrigatórias.' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres.' });
+  }
+
+  try {
+    // Busca o admin pelo ID extraído do token JWT
+    const admin = await db.getAdminById(req.adminId);
+    if (!admin) {
+      return res.status(404).json({ error: 'Administrador não encontrado.' });
+    }
+
+    const isValid = bcrypt.compareSync(currentPassword, admin.password_hash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Senha atual incorreta. Verifique e tente novamente.' });
+    }
+
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    await db.updateAdminPassword(admin.username, newHash);
+    await db.addLog('info', `[Admin] A senha do usuário "${admin.username}" foi alterada com sucesso.`);
+    res.json({ success: true, message: 'Senha alterada com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao alterar senha:', err);
+    res.status(500).json({ error: 'Erro ao alterar a senha.' });
+  }
+});
+
+// Obter perfil do administrador logado
+app.get('/api/admin/profile', authenticateAdmin, async (req, res) => {
+  try {
+    const admin = await db.getAdminById(req.adminId);
+    if (!admin) {
+      return res.status(404).json({ error: 'Administrador não encontrado.' });
+    }
+    res.json({
+      id: admin.id,
+      username: admin.username,
+      email: admin.email || ''
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar perfil.' });
+  }
+});
+
+// Atualizar perfil (e-mail) do administrador logado
+app.post('/api/admin/profile', authenticateAdmin, async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'O e-mail é obrigatório.' });
+  }
+  try {
+    const admin = await db.getAdminById(req.adminId);
+    if (!admin) {
+      return res.status(404).json({ error: 'Administrador não encontrado.' });
+    }
+    
+    // Atualizar no banco
+    await db.updateAdminProfile(req.adminId, email.trim());
+    await db.addLog('info', `[Admin] O e-mail de recuperação do administrador "${admin.username}" foi atualizado para "${email}".`);
+    res.json({ success: true, message: 'Perfil atualizado com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao atualizar perfil:', err);
+    res.status(500).json({ error: 'Erro ao atualizar perfil.' });
+  }
+});
+
+// ── Endpoint público: Configurações Pix ──────────────────────────────────────
+app.get('/api/pix', async (req, res) => {
+  try {
+    const payload = await db.getConfig('pix_payload');
+    const nome    = await db.getConfig('pix_nome');
+    const chave   = await db.getConfig('pix_chave');
+    res.json({
+      payload: payload?.valor || '',
+      nome:    nome?.valor    || 'Studio Ana Dias',
+      chave:   chave?.valor   || ''
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar configurações Pix.' });
+  }
+});
+
+// Atualizar configurações Pix (admin autenticado)
+app.post('/api/pix', authenticateAdmin, async (req, res) => {
+  const { payload, nome, chave } = req.body;
+  if (!payload) return res.status(400).json({ error: 'O código Pix (payload) é obrigatório.' });
+  try {
+    await db.setConfig('pix_payload', payload.trim());
+    if (nome)  await db.setConfig('pix_nome',  nome.trim());
+    if (chave) await db.setConfig('pix_chave', chave.trim());
+    await db.addLog('info', '[Admin] Configurações Pix atualizadas.');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao salvar configurações Pix.' });
+  }
+});
+
+// Obter fotos do "Sobre Mim"
+app.get('/api/sobre-fotos', async (req, res) => {
+  try {
+    const pessoal  = await db.getConfig('sobre_foto_pessoal');
+    const trabalho = await db.getConfig('sobre_foto_trabalho');
+    res.json({
+      fotoPessoal:  pessoal?.valor  || '/assets/ana-julia.jpg',
+      fotoTrabalho: trabalho?.valor || '/assets/ana-work.jpg'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar fotos do Sobre Mim.' });
+  }
+});
+
+// Atualizar fotos do "Sobre Mim" (admin autenticado)
+app.post('/api/sobre-fotos', authenticateAdmin, async (req, res) => {
+  const { fotoPessoal, fotoTrabalho } = req.body;
+  try {
+    if (fotoPessoal)  await db.setConfig('sobre_foto_pessoal',  fotoPessoal);
+    if (fotoTrabalho) await db.setConfig('sobre_foto_trabalho', fotoTrabalho);
+    
+    await db.addLog('info', '[Admin] Fotos da seção Sobre Mim atualizadas.');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao salvar fotos.' });
+  }
+});
+
 // ── Endpoint público: Slots disponíveis por semana ───────────────────────────
 app.get('/api/slots', async (req, res) => {
   try {
@@ -270,6 +400,12 @@ app.post('/api/webhook/agendamento', async (req, res) => {
     if (process.env.WHATSAPP_SIMULATION !== 'false') {
       const msgWhatsApp = `Olá, ${nome}! ✨ Seu agendamento para *${servico_nome}* no dia *${data}* às *${hora}* foi confirmado com sucesso no Studio Ana Dias. Já recebemos o seu Pix de sinal de 20%. Aguardamos você! 🌸`;
       await db.addLog('success', `[WhatsApp] Mensagem de boas-vindas enviada para +${telefone}. Conteúdo: "${msgWhatsApp}"`);
+      
+      // Notificação para o administrador principal
+      const adminWhatsApp = `19992471473`;
+      const msgAdmin = `📢 *Novo Agendamento Confirmado!* \n\n👤 *Cliente:* ${nome}\n📞 *WhatsApp:* ${telefone}\n✨ *Procedimento:* ${servico_nome}\n📅 *Data:* ${data}\n⏰ *Horário:* ${hora}\n💰 *Sinal Pix:* Confirmado 20%`;
+      await db.addLog('success', `[WhatsApp Notificação Admin] Alerta enviado para +${adminWhatsApp}. Conteúdo: "${msgAdmin}"`);
+      
       whatsappEnviado = true;
     }
 

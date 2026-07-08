@@ -29,6 +29,7 @@
       </div>
     </div>
     <div class="nav-links">
+      <a href="#sobre">Sobre Mim</a>
       <a href="#portfolio">Portfólio</a>
       <a href="#servicos" class="nav-btn-highlight">Ver Serviços</a>
       <a href="#faq">Perguntas</a>
@@ -64,6 +65,59 @@
                 <div><strong>Mariana Souza</strong><span>Cliente Recorrente</span></div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção Sobre a Profissional -->
+    <section id="sobre" class="client-section reveal">
+      <div class="section-title-container">
+        <span class="section-subtitle">Conheça a Profissional</span>
+        <h2>A Alma por trás do Studio</h2>
+        <p>A dedicação e o detalhismo que transformam cada olhar.</p>
+      </div>
+
+      <div class="about-grid">
+        <!-- Card Esquerdo: Apresentação & Foto Pessoal -->
+        <div class="about-card-left">
+          <div class="about-card-inner">
+            <span class="about-welcome">Muito prazer,</span>
+            <h3 class="about-name serif-title">Ana Júlia Dias</h3>
+            <div class="about-photo-wrapper">
+              <img src="/assets/ana-julia.jpg" alt="Ana Júlia Dias" class="about-personal-img" id="about-personal-img">
+              <span class="about-tagline">Sua mais nova lash! 🌸</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Direito: Diferenciais & Foto do Trabalho -->
+        <div class="about-card-right">
+          <div class="about-details-box">
+            <div class="about-bullet">
+              <div class="bullet-dot"></div>
+              <p>Especializada em <strong>Lash Design</strong> e <strong>Design de Sobrancelha</strong>.</p>
+            </div>
+            <div class="about-bullet">
+              <div class="bullet-dot"></div>
+              <p>Extremamente <strong>detalhista</strong> e <strong>criativa</strong>.</p>
+            </div>
+            <div class="about-bullet">
+              <div class="bullet-dot"></div>
+              <p>Apaixonada pelo mundo da <strong>beleza</strong> e <strong>estética</strong>.</p>
+            </div>
+            <div class="about-bullet">
+              <div class="bullet-dot"></div>
+              <p>Amo <strong>viajar</strong> e me inspirar pelas belezas do mundo.</p>
+            </div>
+            <div class="about-bullet">
+              <div class="bullet-dot animate-pulse"></div>
+              <p>Meu trabalho é te lembrar da sua <strong>beleza natural</strong>.</p>
+            </div>
+          </div>
+
+          <div class="about-work-photo-box">
+            <img src="/assets/ana-work.jpg" alt="Trabalho de Lash Design" class="about-work-img" id="about-work-img">
           </div>
         </div>
       </div>
@@ -246,11 +300,18 @@
 
         <div class="pix-payment-box">
           <div class="pix-qr-container">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=00020101021226830014br.gov.bcb.pix2561pix.render.com/studio-ana-dias520400005303986540524.005802BR5915StudioAnaDias6009SaoPaulo62070503001" alt="Pix QR Code">
+            <img id="pix-qr-img" src="" alt="QR Code Pix" style="border-radius:12px;">
           </div>
           <div class="pix-code-container">
-            <label>Chave Pix Copie e Cole</label>
-            <input type="text" id="pix-copy-paste" readonly value="00020101021226830014br.gov.bcb.pix2561pix.render.com/studio-ana-dias520400005303986">
+            <div class="pix-beneficiary">
+              <i data-lucide="user-check"></i>
+              <div>
+                <span>Beneficiária</span>
+                <strong id="pix-nome-display">Carregando...</strong>
+              </div>
+            </div>
+            <label>Código Pix — Copie e Cole</label>
+            <input type="text" id="pix-copy-paste" readonly placeholder="Carregando código Pix...">
             <button class="btn-copy-code" type="button" id="btn-copy-pix">
               <i data-lucide="copy"></i> Copiar Código
             </button>
@@ -576,7 +637,39 @@
       showStep('step-pix');
     });
 
+    // ── Carregar Dados Pix ─────────────────────────────────────────────────
+    let pixData = { payload: '', nome: 'Studio Ana Dias', chave: '' };
+
+    async function fetchPix() {
+      try {
+        const res = await fetch('/api/pix');
+        pixData = await res.json();
+        document.getElementById('pix-copy-paste').value = pixData.payload;
+        document.getElementById('pix-nome-display').innerText = pixData.nome;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(pixData.payload)}`;
+        document.getElementById('pix-qr-img').src = qrUrl;
+      } catch (e) {
+        console.warn('Erro ao carregar dados Pix:', e);
+      }
+    }
+
     document.getElementById('btn-back-pix').addEventListener('click', () => showStep('step-form'));
+
+    // ── Carregar Fotos do Sobre Mim ────────────────────────────────────────
+    async function fetchSobreFotos() {
+      try {
+        const res = await fetch('/api/sobre-fotos');
+        const data = await res.json();
+        if (data.fotoPessoal) {
+          document.getElementById('about-personal-img').src = data.fotoPessoal;
+        }
+        if (data.fotoTrabalho) {
+          document.getElementById('about-work-img').src = data.fotoTrabalho;
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar fotos do Sobre Mim:', e);
+      }
+    }
 
     // ── Confirmar Pix → Webhook ───────────────────────────────────────────
     document.getElementById('btn-confirm-pix').addEventListener('click', async () => {
@@ -657,6 +750,8 @@
     // ── Boot ─────────────────────────────────────────────────────────────
     fetchServices();
     fetchPortfolio();
+    fetchPix();
+    fetchSobreFotos();
     setTimeout(setupBeforeAfterSliders, 800);
     
     // Configurar observadores de animação no boot posterior
@@ -664,5 +759,18 @@
       document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     }, 1200);
   </script>
+  <!-- Botão Flutuante de WhatsApp -->
+  <a href="https://wa.me/5519992471473?text=Olá!%20Gostaria%20de%20tirar%20uma%20dúvida%20sobre%20os%20procedimentos%20do%20Studio%20Ana%20Dias." 
+     class="whatsapp-floating-btn" 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     aria-label="Falar no WhatsApp"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle">
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+    </svg>
+    <span class="whatsapp-tooltip">Dúvidas? Fale Conosco</span>
+  </a>
+
 </body>
 </html>

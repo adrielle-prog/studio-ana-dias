@@ -83,6 +83,7 @@ async function initializeDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
+        email TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -160,6 +161,11 @@ async function initializeDatabase() {
     const defaultConfigs = [
       ['horarios_trabalho', JSON.stringify(['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'])],
       ['dias_trabalho',     JSON.stringify([1,2,3,4,5,6])],  // Seg(1) a Sáb(6)
+      ['pix_payload',       '00020126330014BR.GOV.BCB.PIX0111506257518415204000053039865802BR5921Ana Julia Santos Dias6009SAO PAULO62140510Q2XWiQHBFJ630404F2'],
+      ['pix_nome',          'Ana Julia Santos Dias'],
+      ['pix_chave',         '50625751841'],
+      ['sobre_foto_pessoal', '/assets/ana-julia.jpg'],
+      ['sobre_foto_trabalho', '/assets/ana-work.jpg'],
     ];
     for (const [chave, valor] of defaultConfigs) {
       await dbRun('INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)', [chave, valor]);
@@ -202,6 +208,18 @@ const dbHelpers = {
   // Autenticação Admin
   getAdminByUsername: (username) => {
     return dbGet('SELECT * FROM admin WHERE username = ?', [username]);
+  },
+
+  getAdminById: (id) => {
+    return dbGet('SELECT * FROM admin WHERE id = ?', [id]);
+  },
+
+  updateAdminPassword: (username, newHash) => {
+    return dbRun('UPDATE admin SET password_hash = ? WHERE username = ?', [newHash, username]);
+  },
+
+  updateAdminProfile: (id, email) => {
+    return dbRun('UPDATE admin SET email = ? WHERE id = ?', [email, id]);
   },
 
   // Clientes e Agendamentos
