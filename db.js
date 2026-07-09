@@ -8,23 +8,40 @@ let pgPool = null;
 let sqliteDb = null;
 
 if (isPostgres) {
-  console.log('Detectado banco PostgreSQL no ambiente. Conectando...');
+  console.log('Detectado banco PostgreSQL no ambiente. Criando pool de conexões...');
   pgPool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false } // Necessário para a nuvem (Render/Neon)
   });
-  initializeDatabase();
 } else {
   const dbPath = path.join(__dirname, 'studio_ana_dias.db');
   console.log('Sem DATABASE_URL. Conectando ao SQLite local em:', dbPath);
   sqliteDb = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('Erro ao abrir banco SQLite:', err.message);
-    } else {
-      sqliteDb.run('PRAGMA foreign_keys = ON;');
-      initializeDatabase();
     }
   });
+}
+
+// Inicia banco de dados de forma síncrona/aguardada
+let initPromise = null;
+function init() {
+  if (initPromise) return initPromise;
+  
+  initPromise = new Promise((resolve, reject) => {
+    if (isPostgres) {
+      initializeDatabase().then(resolve).catch(reject);
+    } else {
+      if (!sqliteDb) {
+        return reject(new Error('SQLite não conectado.'));
+      }
+      sqliteDb.run('PRAGMA foreign_keys = ON;', (err) => {
+        if (err) reject(err);
+        else initializeDatabase().then(resolve).catch(reject);
+      });
+    }
+  });
+  return initPromise;
 }
 
 // Helper para converter query de ? para $1, $2 etc no Postgres
@@ -471,7 +488,9 @@ const dbHelpers = {
 
   deleteDepoimento: (id) => {
     return dbRun(`DELETE FROM depoimentos WHERE id = ?`, [id]);
-  }
+  },
+
+  init
 };
 
 module.exports = dbHelpers;

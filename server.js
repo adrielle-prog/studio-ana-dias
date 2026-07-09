@@ -769,7 +769,18 @@ app.get('/api/debug-db', async (req, res) => {
   }
 });
 
-// Inicialização
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
+// Inicialização — aguarda o banco estar pronto antes de abrir o servidor
+async function boot() {
+  try {
+    await db.init();
+    console.log('Banco de dados pronto. Iniciando servidor...');
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando em http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Falha ao inicializar banco de dados:', err);
+    process.exit(1);
+  }
+}
+
+boot();
