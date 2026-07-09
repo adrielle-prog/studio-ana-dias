@@ -270,6 +270,9 @@
         </div>
 
         <div class="table-card" style="margin-top:1.5rem;">
+          <div class="table-header-title">
+            <h3>Folgas e Dias Fechados</h3>
+          </div>
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
@@ -284,6 +287,59 @@
                 <tr><td colspan="4" class="empty-row">Carregando bloqueios...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Nova Seção: Bloqueio de Horários Especiais (Compromissos / Almoço) -->
+        <div class="grid-2" style="margin-top:2rem;">
+          <!-- Formulário de Bloqueio de Horário -->
+          <div>
+            <div class="form-card">
+              <h3>Bloquear Horário Específico</h3>
+              <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">
+                Bloqueie um horário específico de atendimento (Ex: consulta médica, almoço, etc.)
+              </p>
+              <form id="bloqueio-horario-form">
+                <div class="input-group">
+                  <label>Data</label>
+                  <input type="date" id="block-data" required>
+                </div>
+                <div class="input-group">
+                  <label>Horário</label>
+                  <input type="time" id="block-hora" required>
+                </div>
+                <div class="input-group">
+                  <label>Motivo (opcional)</label>
+                  <input type="text" id="block-descricao" placeholder="Ex: Compromisso pessoal ou Almoço">
+                </div>
+                <button type="submit" class="btn-primary sm" style="margin-top:0.5rem;">
+                  <i data-lucide="lock"></i> Bloquear Horário
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Tabela de Horários Bloqueados -->
+          <div>
+            <div class="table-card" style="height:100%; min-height: 250px;">
+              <div class="table-header-title">
+                <h3>Horários Bloqueados</h3>
+              </div>
+              <div class="table-wrapper" style="max-height: 230px; overflow-y: auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Data/Hora</th>
+                      <th>Motivo</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bloqueios-tbody">
+                    <tr><td colspan="3" class="empty-row">Carregando bloqueios pontuais...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -685,6 +741,28 @@
     </div>
   </div>
 
+  <!-- ── Modal de Comprovante de Pix ── -->
+  <div id="comprovante-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon"><i data-lucide="receipt"></i></div>
+        <div>
+          <h3>Comprovante de Pix</h3>
+          <p id="comprovante-client-name">Cliente: Mariana S.</p>
+        </div>
+        <button class="modal-close" id="btn-close-comprovante" aria-label="Fechar">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="text-align: center; padding: 1rem 0;">
+        <img id="comprovante-img" src="" alt="Comprovante Pix" style="max-width: 100%; max-height: 450px; border-radius: 12px; border: 1px solid var(--border);">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary full-w" id="btn-close-comprovante-ok">Fechar Visualização</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     lucide.createIcons();
 
@@ -866,8 +944,19 @@
         tbody.innerHTML = list.map(a => {
           const parts = a.data ? a.data.split('-') : [];
           const dateBr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : a.data;
+          
+          // Botão do Comprovante (só se existir)
+          const compButton = a.comprovante 
+            ? `<button class="btn-sm btn-ghost" onclick="showComprovante('${esc(a.cliente_nome)}', '${a.id}')" title="Ver Comprovante"><i data-lucide="file-text" style="width:14px;height:14px;"></i> Ver</button>` 
+            : '<span style="font-size:0.75rem;color:var(--text-muted);">Sem arquivo</span>';
+
+          // Ações do PIX (Confirmar se estiver pendente)
+          const confirmAction = a.status_pix !== 'pago' 
+            ? `<button class="btn-icon" onclick="confirmarPix(${a.id})" title="Confirmar Recebimento do Pix" style="background:var(--green-soft);color:var(--green);"><i data-lucide="check-circle" style="width:16px;height:16px;"></i></button>`
+            : '';
+
           return `
-            <tr>
+            <tr data-id="${a.id}">
               <td><span class="badge-id">#${a.id}</span></td>
               <td>
                 <div class="td-user">
@@ -878,20 +967,61 @@
               <td><span class="tag-service">${esc(a.servico_nome)}</span></td>
               <td>${dateBr}</td>
               <td>${a.hora}</td>
-              <td><span class="pix-badge ${a.status_pix}">${a.status_pix === 'pago' ? 'Pago' : 'Pendente'}</span></td>
               <td>
-                <button class="btn-icon-danger" onclick="deleteAgendamento(${a.id})">
-                  <i data-lucide="trash-2"></i>
-                </button>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <span class="pix-badge ${a.status_pix}">${a.status_pix === 'pago' ? 'Pago' : 'Pendente'}</span>
+                  ${compButton}
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; gap:0.25rem;">
+                  ${confirmAction}
+                  <button class="btn-icon-danger" onclick="deleteAgendamento(${a.id})" title="Cancelar Agendamento">
+                    <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           `;
         }).join('');
         lucide.createIcons();
+
+        // Salvar comprovantes no window para exibição rápida
+        window.currentAgendamentos = list;
       } catch {
         tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Erro ao carregar.</td></tr>';
       }
     }
+
+    // Exibir modal do comprovante
+    window.showComprovante = function(clienteNome, agendamentoId) {
+      const ag = window.currentAgendamentos.find(x => String(x.id) === String(agendamentoId));
+      if (!ag || !ag.comprovante) return;
+      document.getElementById('comprovante-client-name').textContent = `Cliente: ${clienteNome}`;
+      document.getElementById('comprovante-img').src = ag.comprovante;
+      document.getElementById('comprovante-overlay').classList.remove('hidden');
+    }
+
+    // Fechar modal comprovante
+    document.getElementById('btn-close-comprovante').addEventListener('click', () => {
+      document.getElementById('comprovante-overlay').classList.add('hidden');
+    });
+    document.getElementById('btn-close-comprovante-ok').addEventListener('click', () => {
+      document.getElementById('comprovante-overlay').classList.add('hidden');
+    });
+
+    // Confirmar PIX manualmente
+    async function confirmarPix(id) {
+      if (!confirm('Confirmar recebimento do Pix para este agendamento?')) return;
+      try {
+        await apiFetch(`/api/admin/agendamentos/${id}/confirmar-pix`, { method: 'PUT' });
+        showToast('Pix confirmado com sucesso! Agendamento ativado.');
+        loadAgendamentos();
+      } catch {
+        showToast('Erro ao confirmar Pix.');
+      }
+    }
+    window.confirmarPix = confirmarPix;
 
     async function deleteAgendamento(id) {
       if (!confirm('Cancelar este agendamento? Esta ação não pode ser desfeita.')) return;
@@ -927,6 +1057,8 @@
 
       // Carregar folgas cadastradas
       loadFolgasTable();
+      // Carregar bloqueios de horários pontuais
+      loadBloqueiosTable();
     }
 
     async function loadFolgasTable() {
@@ -1071,6 +1203,81 @@
         alert('Erro de conexão ao remover folga.');
       }
     }
+
+    // ── Bloqueio de Horários Especiais ──
+    async function loadBloqueiosTable() {
+      const tbody = document.getElementById('bloqueios-tbody');
+      try {
+        const res = await apiFetch('/api/admin/bloqueios');
+        const list = await res.json();
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="empty-row">Nenhum horário bloqueado.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = list.map(b => {
+          const parts = b.data ? b.data.split('-') : [];
+          const dateBr = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : b.data;
+          return `
+            <tr>
+              <td><strong>${dateBr}</strong> às ${b.hora}</td>
+              <td>${esc(b.descricao || 'Compromisso')}</td>
+              <td>
+                <button class="btn-icon-danger" onclick="deleteBloqueio(${b.id})">
+                  <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-row">Erro ao carregar bloqueios.</td></tr>';
+      }
+    }
+    window.loadBloqueiosTable = loadBloqueiosTable;
+
+    // Enviar formulário de bloqueio de horário específico
+    document.getElementById('bloqueio-horario-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = document.getElementById('block-data').value;
+      const hora = document.getElementById('block-hora').value;
+      const descricao = document.getElementById('block-descricao').value.trim();
+
+      try {
+        const res = await apiFetch('/api/admin/bloqueios', {
+          method: 'POST',
+          body: JSON.stringify({ data, hora, descricao })
+        });
+        
+        if (res.ok) {
+          document.getElementById('bloqueio-horario-form').reset();
+          loadBloqueiosTable();
+          showToast('Horário bloqueado com sucesso!');
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Erro ao criar bloqueio de horário.');
+        }
+      } catch {
+        alert('Erro ao conectar ao servidor.');
+      }
+    });
+
+    async function deleteBloqueio(id) {
+      if (!confirm('Deseja mesmo remover o bloqueio deste horário?')) return;
+      try {
+        const res = await apiFetch(`/api/admin/bloqueios/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadBloqueiosTable();
+          showToast('Bloqueio de horário removido.');
+        }
+      } catch {
+        alert('Erro de conexão ao remover bloqueio.');
+      }
+    }
+    window.deleteBloqueio = deleteBloqueio;
+
 
     // ── Serviços ───────────────────────────────────────────
     async function loadServicos() {

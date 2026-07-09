@@ -126,7 +126,7 @@ async function initializeDatabase() {
       )
     `);
 
-    // Tabela de agendamentos
+    // Tabela de agendamentos (adicionado campo comprovante)
     await dbRun(`
       CREATE TABLE IF NOT EXISTS agendamentos (
         id ${serialType},
@@ -137,6 +137,26 @@ async function initializeDatabase() {
         hora TEXT NOT NULL,
         status_pix TEXT NOT NULL,
         origem_site TEXT,
+        comprovante TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(data, hora)
+      )
+    `);
+
+    // Migração segura para adicionar comprovante se a tabela já existia sem ele
+    try {
+      await dbRun('ALTER TABLE agendamentos ADD COLUMN comprovante TEXT');
+    } catch(e) {
+      // Ignora erro se a coluna já existir
+    }
+
+    // Tabela de bloqueios de horário individuais
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS bloqueios_horario (
+        id ${serialType},
+        data TEXT NOT NULL,      -- YYYY-MM-DD
+        hora TEXT NOT NULL,      -- HH:MM
+        descricao TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(data, hora)
       )
@@ -335,17 +355,58 @@ const dbHelpers = {
     return { id: insertId, nome, telefone, email };
   },
 
-  createAgendamento: async (clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite) => {
+  createAgendamento: async (clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite, comprovante) => {
     const result = await dbRun(
-      'INSERT INTO agendamentos (cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite]
+      'INSERT INTO agendamentos (cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site, comprovante) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite, comprovante || null]
     );
-    return { id: result.lastID, clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite };
+    return { id: result.lastID, clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite, comprovante };
   },
 
   checkDoubleBooking: async (data, hora) => {
-    const row = await dbGet('SELECT COUNT(*) as count FROM agendamentos WHERE data = ? AND hora = ?', [data, hora]);
-    return (row?.count || 0) > 0 || row?.count === '1';
+    // Verifica agendamento regular
+    const booking = await dbGet('SELECT COUNT(*) as count FROM agendamentos WHERE data = ? AND hora = ?', [data, hora]);
+    const isBooked = (booking?.count || 0) > 0 || booking?.count === '1';
+    if (isBooked) return true;
+
+    // Verifica bloqueio pontual
+    const block = await dbGet('SELECT COUNT(*) as count FROM bloqueios_horario WHERE data = ? AND hora = ?', [data, hora]);
+    return (block?.count || 0) > 0 || block?.count === '1';
+  },
+
+  // Bloqueios de Horário
+  getBloqueiosData: (data) => {
+    return dbAll('SELECT * FROM bloqueios_horario WHERE data = ?', [data]);
+  },
+
+  getAllBloqueios: () => {
+    return dbAll('SELECT * FROM bloqueios_horario ORDER BY data ASC, hora ASC');
+  },
+
+  createBloqueio: (data, hora, descricao) => {
+    return dbRun(
+      'INSERT INTO bloqueios_horario (data, hora, descricao) VALUES (?, ?, ?)',
+      [data, hora, descricao || null]
+    );
+  },
+
+  deleteBloqueio: (id) => {
+    return dbRun('DELETE FROM bloqueios_horario WHERE id = ?', [id]);
+  },
+
+  getBookedSlots: async (dataInicio, dataFim) => {
+    // 1. Agendamentos
+    const bookings = await dbAll(
+      'SELECT data, hora FROM agendamentos WHERE data >= ? AND data <= ?',
+      [dataInicio, dataFim]
+    );
+    // 2. Bloqueios pontuais
+    const blocks = await dbAll(
+      'SELECT data, hora FROM bloqueios_horario WHERE data >= ? AND data <= ?',
+      [dataInicio, dataFim]
+    );
+    // Retorna a união dos dois
+    return [...bookings, ...blocks];
   },
 
   getAgendamentosSemana: (dataInicio, dataFim) => {
@@ -366,6 +427,19 @@ const dbHelpers = {
        JOIN clientes c ON a.cliente_id = c.id
        ORDER BY a.data DESC, a.hora DESC`
     );
+  },
+
+  getAgendamentos: () => {
+    return dbAll(
+      `SELECT a.*, c.nome as cliente_nome, c.telefone as cliente_telefone, c.email as cliente_email 
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       ORDER BY a.data DESC, a.hora DESC`
+    );
+  },
+
+  confirmarPixAgendamento: (id) => {
+    return dbRun("UPDATE agendamentos SET status_pix = 'pago' WHERE id = ?", [id]);
   },
 
   deleteAgendamento: (id) => {

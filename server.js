@@ -842,7 +842,8 @@ app.post('/api/webhook/agendamento', async (req, res) => {
       data,
       hora,
       status_pix.toLowerCase(),
-      origem
+      origem,
+      agendamento.comprovante || null
     );
 
     await db.addLog('success', `[Agenda] Horário reservado e agendamento ID #${novoAgendamento.id} gravado no banco.`);
@@ -982,6 +983,17 @@ app.get('/api/agendamentos', authenticateAdmin, async (req, res) => {
   }
 });
 
+app.put('/api/admin/agendamentos/:id/confirmar-pix', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.confirmarPixAgendamento(Number(id));
+    await db.addLog('info', `[Admin] Pagamento Pix do agendamento ID #${id} confirmado manualmente.`);
+    res.json({ success: true, message: 'Pix confirmado manualmente.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao confirmar Pix.' });
+  }
+});
+
 app.delete('/api/agendamentos/:id', authenticateAdmin, async (req, res) => {
   try {
     await db.deleteAgendamento(Number(req.params.id));
@@ -1051,6 +1063,46 @@ app.delete('/api/folgas/:id', authenticateAdmin, async (req, res) => {
     res.status(500).json({ error: 'Erro ao remover folga.' });
   }
 });
+
+// ── Bloqueios de Horários Especiais Endpoints ──────────────────────────────
+app.get('/api/admin/bloqueios', authenticateAdmin, async (req, res) => {
+  try {
+    const data = await db.getAllBloqueios();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar bloqueios.' });
+  }
+});
+
+app.post('/api/admin/bloqueios', authenticateAdmin, async (req, res) => {
+  try {
+    const { data, hora, descricao } = req.body;
+    if (!data || !hora) {
+      return res.status(400).json({ error: 'Data e hora são obrigatórias.' });
+    }
+    // Verificar se já existe agendamento ou bloqueio
+    const isOcupado = await db.checkDoubleBooking(data, hora);
+    if (isOcupado) {
+      return res.status(400).json({ error: 'Este horário já está ocupado ou bloqueado.' });
+    }
+    await db.createBloqueio(data, hora, descricao);
+    await db.addLog('info', `[Admin] Horário bloqueado: ${data} às ${hora} (${descricao || 'Sem descrição'})`);
+    res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao criar bloqueio.' });
+  }
+});
+
+app.delete('/api/admin/bloqueios/:id', authenticateAdmin, async (req, res) => {
+  try {
+    await db.deleteBloqueio(Number(req.params.id));
+    await db.addLog('info', `[Admin] Bloqueio de horário ID #${req.params.id} removido.`);
+    res.json({ message: 'Bloqueio de horário removido.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao remover bloqueio.' });
+  }
+});
+
 
 // ── Configurações Endpoints ──────────────────────────────────────────────────
 app.get('/api/configuracoes', async (req, res) => {

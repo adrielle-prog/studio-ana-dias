@@ -1205,3 +1205,53 @@ textarea { resize: vertical; min-height: 80px; }
 .badge-gold { background: var(--gold-soft); color: var(--gold); }
 .badge-red { background: var(--red-soft); color: var(--red); }
 
+/* Utilitários Admin */
+.table-header-title {
+  padding: 1rem 1.25rem 0.5rem;
+}
+.table-header-title h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.2s;
+}
+.btn-sm:hover { background: rgba(157,78,221,0.1); color: #c084fc; border-color: rgba(157,78,221,0.3); }
+
+.full-w { width: 100%; }
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-body {
+  padding: 1rem 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

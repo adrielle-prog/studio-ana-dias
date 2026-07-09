@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
   <!-- Efeito Parallax de Fundo -->
@@ -389,9 +390,30 @@
           </div>
         </div>
 
-        <div class="booking-notice warning">
+        <!-- Área de Upload do Comprovante Pix -->
+        <div class="comprovante-upload-box" style="margin-top: 1.5rem; background: rgba(255,255,255,0.03); border: 1px dashed rgba(157, 78, 221, 0.3); border-radius: 12px; padding: 1.25rem;">
+          <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #e9d5ff;">
+            <i data-lucide="upload-cloud" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Envie o Comprovante do Pix *
+          </label>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">Nossa inteligência artificial valida comprovantes agendados para evitar golpes. Por favor, envie a imagem do comprovante da transferência realizada.</p>
+          
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <label class="depo-foto-label" for="pix-comprovante-input" style="margin:0; flex-shrink:0;">
+              <i data-lucide="file-image"></i>
+              <span id="pix-comprovante-label-text">Selecionar imagem</span>
+            </label>
+            <input type="file" id="pix-comprovante-input" accept="image/*" class="hidden-file" required>
+            
+            <div id="pix-comprovante-preview" class="depo-foto-preview" style="display:none; width:50px; height:50px;"></div>
+          </div>
+          
+          <!-- Status do OCR -->
+          <div id="pix-ocr-status" class="depo-msg hidden" style="margin-top:1rem; text-align:left;"></div>
+        </div>
+
+        <div class="booking-notice warning" style="margin-top:1.5rem;">
           <i data-lucide="alert-triangle"></i>
-          <span>O agendamento só é confirmado após clicar no botão abaixo.</span>
+          <span>O agendamento só é confirmado após anexar o comprovante e clicar no botão abaixo.</span>
         </div>
 
         <div class="grid-2">
@@ -705,6 +727,16 @@
       e.preventDefault();
       const sinal = selectedService.preco * 0.20;
       document.getElementById('pix-value').innerText = `R$ ${sinal.toFixed(2)}`;
+
+      // Resetar estado do comprovante
+      comprovanteBase64 = null;
+      comprovanteValido = false;
+      document.getElementById('pix-comprovante-input').value = '';
+      document.getElementById('pix-comprovante-label-text').textContent = 'Selecionar imagem';
+      document.getElementById('pix-comprovante-preview').style.display = 'none';
+      document.getElementById('pix-ocr-status').classList.add('hidden');
+      document.getElementById('btn-confirm-pix').disabled = true;
+
       showStep('step-pix');
     });
 
@@ -742,11 +774,89 @@
       }
     }
 
+    // ── Comprovante Pix: Upload + Preview ────────────────────────────────
+    let comprovanteBase64 = null;
+    let comprovanteValido = false;
+
+    document.getElementById('pix-comprovante-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('pix-ocr-status');
+      const previewEl = document.getElementById('pix-comprovante-preview');
+      const labelEl = document.getElementById('pix-comprovante-label-text');
+      const btnConfirm = document.getElementById('btn-confirm-pix');
+
+      labelEl.textContent = file.name.length > 22 ? file.name.substring(0, 22) + '...' : file.name;
+      comprovanteBase64 = null;
+      comprovanteValido = false;
+      btnConfirm.disabled = true;
+
+      // Mostrar preview
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        comprovanteBase64 = ev.target.result;
+        previewEl.style.display = 'block';
+        previewEl.style.backgroundImage = `url('${comprovanteBase64}')`;
+        previewEl.style.backgroundSize = 'cover';
+        previewEl.style.backgroundPosition = 'center';
+        previewEl.style.borderRadius = '8px';
+      };
+      reader.readAsDataURL(file);
+
+      // Rodar OCR com Tesseract
+      statusEl.classList.remove('hidden');
+      statusEl.style.cssText = 'color:#c084fc; font-size:0.8rem; margin-top:0.75rem;';
+      statusEl.innerHTML = '<i data-lucide="loader-2" style="width:14px;height:14px;vertical-align:middle;animation:spin 1s linear infinite;"></i> Analisando comprovante...';
+      lucide.createIcons();
+
+      try {
+        const { data: { text } } = await Tesseract.recognize(file, 'por', { logger: () => {} });
+        const lowerText = text.toLowerCase();
+
+        // Palavras que indicam PIX AGENDADO (fraude)
+        const fraudKeywords = ['agendado', 'agendamento', 'pagamento agendado', 'transação agendada', 'será enviado', 'pix agendado', 'scheduled'];
+        const isFraud = fraudKeywords.some(kw => lowerText.includes(kw));
+
+        if (isFraud) {
+          statusEl.style.cssText = 'color:#f87171; font-size:0.8rem; margin-top:0.75rem; padding:0.75rem; background:rgba(239,68,68,0.1); border-radius:8px; border:1px solid rgba(239,68,68,0.3);';
+          statusEl.innerHTML = '⚠️ <strong>PIX AGENDADO detectado!</strong><br>Não aceitamos PIX Agendado como forma de pagamento. Por favor, realize um <strong>PIX imediato</strong> e envie o comprovante da transferência concluída.';
+          comprovanteValido = false;
+          btnConfirm.disabled = true;
+        } else {
+          statusEl.style.cssText = 'color:#4ade80; font-size:0.8rem; margin-top:0.75rem; padding:0.75rem; background:rgba(74,222,128,0.07); border-radius:8px; border:1px solid rgba(74,222,128,0.25);';
+          statusEl.innerHTML = '✅ <strong>Comprovante validado!</strong> Pode prosseguir com a confirmação.';
+          comprovanteValido = true;
+          btnConfirm.disabled = false;
+        }
+      } catch {
+        // Se OCR falhar por qualquer motivo, libera mesmo assim (revisão manual pelo admin)
+        statusEl.style.cssText = 'color:#facc15; font-size:0.8rem; margin-top:0.75rem;';
+        statusEl.innerHTML = '⚠️ Não foi possível validar automaticamente. O comprovante será revisado manualmente pelo Studio.';
+        comprovanteValido = true;
+        btnConfirm.disabled = false;
+      }
+      lucide.createIcons();
+    });
+
     // ── Confirmar Pix → Webhook ───────────────────────────────────────────
     document.getElementById('btn-confirm-pix').addEventListener('click', async () => {
       const btn = document.getElementById('btn-confirm-pix');
+
+      // Verificar se comprovante foi anexado
+      const fileInput = document.getElementById('pix-comprovante-input');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Por favor, anexe o comprovante do Pix antes de confirmar.');
+        return;
+      }
+      if (!comprovanteValido) {
+        alert('O comprovante não foi validado. Verifique se é um Pix imediato (não agendado).');
+        return;
+      }
+
       btn.disabled = true;
-      btn.innerHTML = 'Verificando Pix...';
+      btn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;vertical-align:middle;"></i> Enviando...';
+      lucide.createIcons();
 
       const payload = {
         cliente: {
@@ -755,10 +865,11 @@
           email:    document.getElementById('client-email').value
         },
         agendamento: {
-          servico_id: selectedService.id.toString(),
+          servico_id:  selectedService.id.toString(),
           data:        selectedDate,
           hora:        selectedHora,
-          status_pix: 'pago'
+          status_pix:  'pago',
+          comprovante: comprovanteBase64
         },
         metadados: {
           origem_site: 'Landing Page Pública',
@@ -775,7 +886,7 @@
         const result = await res.json();
 
         if (res.ok) {
-          document.getElementById('sum-service').innerText  = selectedService.nome;
+          document.getElementById('sum-service').innerText = selectedService.nome;
           const [y, m, d] = selectedDate.split('-');
           document.getElementById('sum-datetime').innerText = `${d}/${m}/${y} às ${selectedHora}`;
           showStep('step-success');

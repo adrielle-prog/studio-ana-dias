@@ -1957,3 +1957,13 @@ input:focus, select:focus, textarea:focus {
   .depo-form-row { grid-template-columns: 1fr; }
   .depo-grid { grid-template-columns: 1fr; }
 }
+
+/* Utilitários gerais */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.hidden-file {
+  display: none;
+}
