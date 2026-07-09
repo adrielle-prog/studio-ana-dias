@@ -30,21 +30,24 @@ if (isPostgres) {
 // Helper para converter query de ? para $1, $2 etc no Postgres
 function translateQuery(sql, params = []) {
   if (!isPostgres) {
-    // Compatibilidade de INSERT OR IGNORE no SQLite
     return { sql, params };
   }
   
-  // Converter placeholders ? para $1, $2
   let pgSql = sql;
   let index = 1;
   while (pgSql.includes('?')) {
     pgSql = pgSql.replace('?', `$${index++}`);
   }
 
-  // Converter comandos específicos
+  // Compatibilidade de INSERT OR IGNORE
   pgSql = pgSql.replace(/INSERT OR IGNORE INTO configuracoes/gi, 'INSERT INTO configuracoes');
   if (sql.toLowerCase().includes('insert or ignore into configuracoes')) {
     pgSql += ' ON CONFLICT (chave) DO NOTHING';
+  }
+
+  // Garantir RETURNING id para inserções no PostgreSQL para obter o lastID
+  if (pgSql.trim().toLowerCase().startsWith('insert ') && !pgSql.toLowerCase().includes('returning')) {
+    pgSql += ' RETURNING id';
   }
 
   return { sql: pgSql, params };
@@ -76,7 +79,10 @@ const dbAll = (sql, params = []) => {
 const dbRun = (sql, params = []) => {
   const q = translateQuery(sql, params);
   if (isPostgres) {
-    return pgPool.query(q.sql, q.params).then(res => ({ id: res.insertId, lastID: res.insertId, changes: res.rowCount }));
+    return pgPool.query(q.sql, q.params).then(res => {
+      const generatedId = res.rows && res.rows[0] ? res.rows[0].id : null;
+      return { id: generatedId, lastID: generatedId, changes: res.rowCount };
+    });
   } else {
     return new Promise((resolve, reject) => {
       sqliteDb.run(q.sql, q.params, function (err) {
