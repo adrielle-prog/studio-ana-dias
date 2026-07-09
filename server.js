@@ -76,7 +76,6 @@ app.post('/api/admin/change-password', authenticateAdmin, async (req, res) => {
   }
 
   try {
-    // Busca o admin pelo ID extraído do token JWT
     const admin = await db.getAdminById(req.adminId);
     if (!admin) {
       return res.status(404).json({ error: 'Administrador não encontrado.' });
@@ -88,9 +87,49 @@ app.post('/api/admin/change-password', authenticateAdmin, async (req, res) => {
     }
 
     const newHash = bcrypt.hashSync(newPassword, 10);
+
+    // 1. Salva no banco de dados local
     await db.updateAdminPassword(admin.username, newHash);
-    await db.addLog('info', `[Admin] A senha do usuário "${admin.username}" foi alterada com sucesso.`);
-    res.json({ success: true, message: 'Senha alterada com sucesso.' });
+
+    // 2. Persiste no Render via API para sobreviver a redeploys
+    let renderSynced = false;
+    const renderApiKey = process.env.RENDER_API_KEY;
+    const renderServiceId = process.env.RENDER_SERVICE_ID;
+
+    if (renderApiKey && renderServiceId) {
+      try {
+        const https = require('https');
+        const body = JSON.stringify([{ key: 'ADMIN_PASSWORD_HASH', value: newHash }]);
+        const options = {
+          hostname: 'api.render.com',
+          path: `/v1/services/${renderServiceId}/env-vars`,
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${renderApiKey}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(body)
+          }
+        };
+        await new Promise((resolve) => {
+          const request = https.request(options, (r) => {
+            r.on('data', () => {});
+            r.on('end', () => { renderSynced = r.statusCode < 300; resolve(); });
+          });
+          request.on('error', resolve);
+          request.write(body);
+          request.end();
+        });
+      } catch (e) {
+        console.warn('[Render API] Falha ao sincronizar senha:', e.message);
+      }
+    }
+
+    await db.addLog('info', `[Admin] Senha de "${admin.username}" alterada. Render sincronizado: ${renderSynced}`);
+    res.json({
+      success: true,
+      message: 'Senha alterada com sucesso.' + (renderSynced ? ' Senha persistida no Render ✅' : ''),
+      renderSynced
+    });
   } catch (err) {
     console.error('Erro ao alterar senha:', err);
     res.status(500).json({ error: 'Erro ao alterar a senha.' });

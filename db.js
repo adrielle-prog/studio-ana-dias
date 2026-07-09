@@ -134,12 +134,18 @@ async function initializeDatabase() {
 
     console.log('Tabelas do banco de dados inicializadas.');
 
-    // Seed admin se estiver vazio
+    // Seed admin — usa hash persistido no env var do Render se disponível
     const adminCount = await dbGet('SELECT COUNT(*) as count FROM admin');
     if (adminCount.count === 0) {
-      const hash = bcrypt.hashSync('admin123', 10);
-      await dbRun('INSERT INTO admin (username, password_hash) VALUES (?, ?)', ['admin', hash]);
-      console.log('Seed: Administrador padrão criado (username: admin, password: admin123)');
+      // ADMIN_PASSWORD_HASH é setado automaticamente ao trocar a senha no painel
+      const hash = process.env.ADMIN_PASSWORD_HASH || bcrypt.hashSync('admin123', 10);
+      const username = process.env.ADMIN_USERNAME || 'admin';
+      await dbRun('INSERT INTO admin (username, password_hash) VALUES (?, ?)', [username, hash]);
+      const source = process.env.ADMIN_PASSWORD_HASH ? 'variável de ambiente (persistida)' : 'padrão (admin123)';
+      console.log(`Seed: Administrador criado a partir da ${source}. Username: ${username}`);
+    } else if (process.env.ADMIN_PASSWORD_HASH) {
+      // Garante que o hash no banco esteja sempre sincronizado com o env var
+      await dbRun('UPDATE admin SET password_hash = ? WHERE id = 1', [process.env.ADMIN_PASSWORD_HASH]);
     }
 
     // Seed serviços se estiver vazio
