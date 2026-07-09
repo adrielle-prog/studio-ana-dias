@@ -1,59 +1,112 @@
 const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
-const dbPath = path.join(__dirname, 'studio_ana_dias.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Erro ao abrir o banco de dados:', err.message);
-  } else {
-    console.log('Conectado ao banco SQLite em:', dbPath);
-    initializeDatabase();
-  }
-});
+const isPostgres = !!process.env.DATABASE_URL;
+let pgPool = null;
+let sqliteDb = null;
 
-// Habilitar chaves estrangeiras
-db.run('PRAGMA foreign_keys = ON;');
+if (isPostgres) {
+  console.log('Detectado banco PostgreSQL no ambiente. Conectando...');
+  pgPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // Necessário para a nuvem (Render/Neon)
+  });
+  initializeDatabase();
+} else {
+  const dbPath = path.join(__dirname, 'studio_ana_dias.db');
+  console.log('Sem DATABASE_URL. Conectando ao SQLite local em:', dbPath);
+  sqliteDb = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('Erro ao abrir banco SQLite:', err.message);
+    } else {
+      sqliteDb.run('PRAGMA foreign_keys = ON;');
+      initializeDatabase();
+    }
+  });
+}
+
+// Helper para converter query de ? para $1, $2 etc no Postgres
+function translateQuery(sql, params = []) {
+  if (!isPostgres) {
+    // Compatibilidade de INSERT OR IGNORE no SQLite
+    return { sql, params };
+  }
+  
+  // Converter placeholders ? para $1, $2
+  let pgSql = sql;
+  let index = 1;
+  while (pgSql.includes('?')) {
+    pgSql = pgSql.replace('?', `$${index++}`);
+  }
+
+  // Converter comandos específicos
+  pgSql = pgSql.replace(/INSERT OR IGNORE INTO configuracoes/gi, 'INSERT INTO configuracoes');
+  if (sql.toLowerCase().includes('insert or ignore into configuracoes')) {
+    pgSql += ' ON CONFLICT (chave) DO NOTHING';
+  }
+
+  return { sql: pgSql, params };
+}
 
 // Helpers para Promises
 const dbGet = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => err ? reject(err) : resolve(row));
-  });
+  const q = translateQuery(sql, params);
+  if (isPostgres) {
+    return pgPool.query(q.sql, q.params).then(res => res.rows[0] || null);
+  } else {
+    return new Promise((resolve, reject) => {
+      sqliteDb.get(q.sql, q.params, (err, row) => err ? reject(err) : resolve(row));
+    });
+  }
 };
 
 const dbAll = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
-  });
+  const q = translateQuery(sql, params);
+  if (isPostgres) {
+    return pgPool.query(q.sql, q.params).then(res => res.rows);
+  } else {
+    return new Promise((resolve, reject) => {
+      sqliteDb.all(q.sql, q.params, (err, rows) => err ? reject(err) : resolve(rows));
+    });
+  }
 };
 
 const dbRun = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve(this);
+  const q = translateQuery(sql, params);
+  if (isPostgres) {
+    return pgPool.query(q.sql, q.params).then(res => ({ id: res.insertId, lastID: res.insertId, changes: res.rowCount }));
+  } else {
+    return new Promise((resolve, reject) => {
+      sqliteDb.run(q.sql, q.params, function (err) {
+        if (err) reject(err);
+        else resolve({ id: this.lastID, lastID: this.lastID, changes: this.changes });
+      });
     });
-  });
+  }
 };
 
 async function initializeDatabase() {
   try {
+    const serialType = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+    const textType = isPostgres ? 'TEXT' : 'TEXT';
+
     // Tabela de clientes
     await dbRun(`
       CREATE TABLE IF NOT EXISTS clientes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         nome TEXT NOT NULL,
         telefone TEXT UNIQUE NOT NULL,
         email TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Tabela de agendamentos
     await dbRun(`
       CREATE TABLE IF NOT EXISTS agendamentos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         cliente_id INTEGER NOT NULL,
         servico_id TEXT NOT NULL,
         servico_nome TEXT NOT NULL,
@@ -61,8 +114,7 @@ async function initializeDatabase() {
         hora TEXT NOT NULL,
         status_pix TEXT NOT NULL,
         origem_site TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(data, hora)
       )
     `);
@@ -70,79 +122,88 @@ async function initializeDatabase() {
     // Tabela de logs de automação
     await dbRun(`
       CREATE TABLE IF NOT EXISTS logs_automacao (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         tipo TEXT NOT NULL,
         mensagem TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Tabela de administrador
     await dbRun(`
       CREATE TABLE IF NOT EXISTS admin (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         email TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Tabela de serviços
     await dbRun(`
       CREATE TABLE IF NOT EXISTS servicos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         nome TEXT NOT NULL,
         preco REAL NOT NULL,
         duracao_min INTEGER NOT NULL,
         descricao TEXT,
-        imagem TEXT, -- Armazenará link ou base64
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        imagem TEXT, 
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Tabela de portfólio (Antes/Depois)
     await dbRun(`
       CREATE TABLE IF NOT EXISTS portfolio (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         titulo TEXT NOT NULL,
         imagem_antes TEXT NOT NULL,
         imagem_depois TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Tabela de folgas e feriados
     await dbRun(`
       CREATE TABLE IF NOT EXISTS folgas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tipo TEXT NOT NULL CHECK(tipo IN ('data','dia_semana')),
-        data TEXT,          -- YYYY-MM-DD  (usado quando tipo='data')
-        dia_semana INTEGER, -- 0=Dom ... 6=Sáb (usado quando tipo='dia_semana')
+        id ${serialType},
+        tipo TEXT NOT NULL,
+        data TEXT,          
+        dia_semana INTEGER, 
         descricao TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // Tabela de configurações gerais (chave/valor)
-    await dbRun(`
-      CREATE TABLE IF NOT EXISTS configuracoes (
-        chave TEXT PRIMARY KEY,
-        valor TEXT NOT NULL
-      )
-    `);
+    if (isPostgres) {
+      await dbRun(`
+        CREATE TABLE IF NOT EXISTS configuracoes (
+          chave TEXT PRIMARY KEY,
+          valor TEXT NOT NULL
+        )
+      `);
+    } else {
+      await dbRun(`
+        CREATE TABLE IF NOT EXISTS configuracoes (
+          chave TEXT PRIMARY KEY,
+          valor TEXT NOT NULL
+        )
+      `);
+    }
 
     // Tabela de depoimentos de clientes
     await dbRun(`
       CREATE TABLE IF NOT EXISTS depoimentos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${serialType},
         nome TEXT NOT NULL,
         servico TEXT,
         texto TEXT NOT NULL,
         foto TEXT,
         rating INTEGER DEFAULT 5,
         status TEXT DEFAULT 'pendente',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -150,21 +211,19 @@ async function initializeDatabase() {
 
     // Seed admin — usa hash persistido no env var do Render se disponível
     const adminCount = await dbGet('SELECT COUNT(*) as count FROM admin');
-    if (adminCount.count === 0) {
-      // ADMIN_PASSWORD_HASH é setado automaticamente ao trocar a senha no painel
+    if (adminCount.count === 0 || adminCount.count === '0') {
       const hash = process.env.ADMIN_PASSWORD_HASH || bcrypt.hashSync('admin123', 10);
       const username = process.env.ADMIN_USERNAME || 'admin';
       await dbRun('INSERT INTO admin (username, password_hash) VALUES (?, ?)', [username, hash]);
-      const source = process.env.ADMIN_PASSWORD_HASH ? 'variável de ambiente (persistida)' : 'padrão (admin123)';
+      const source = process.env.ADMIN_PASSWORD_HASH ? 'variável de ambiente' : 'padrão (admin123)';
       console.log(`Seed: Administrador criado a partir da ${source}. Username: ${username}`);
     } else if (process.env.ADMIN_PASSWORD_HASH) {
-      // Garante que o hash no banco esteja sempre sincronizado com o env var
       await dbRun('UPDATE admin SET password_hash = ? WHERE id = 1', [process.env.ADMIN_PASSWORD_HASH]);
     }
 
     // Seed serviços se estiver vazio
     const servicosCount = await dbGet('SELECT COUNT(*) as count FROM servicos');
-    if (servicosCount.count === 0) {
+    if (servicosCount.count === 0 || servicosCount.count === '0') {
       const defaultServices = [
         ['Cílios (Extensão)', 120.00, 60, 'Extensão de cílios clássica ou volume russo para destacar seu olhar.'],
         ['Sobrancelha (Design)', 50.00, 40, 'Design de sobrancelhas personalizado para harmonizar seu rosto.'],
@@ -180,7 +239,7 @@ async function initializeDatabase() {
     // Seed configurações padrão
     const defaultConfigs = [
       ['horarios_trabalho', JSON.stringify(['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'])],
-      ['dias_trabalho',     JSON.stringify([1,2,3,4,5,6])],  // Seg(1) a Sáb(6)
+      ['dias_trabalho',     JSON.stringify([1,2,3,4,5,6])],  
       ['pix_payload',       '00020126330014BR.GOV.BCB.PIX0111506257518415204000053039865802BR5921Ana Julia Santos Dias6009SAO PAULO62140510Q2XWiQHBFJ630404F2'],
       ['pix_nome',          'Ana Julia Santos Dias'],
       ['pix_chave',         '50625751841'],
@@ -191,9 +250,9 @@ async function initializeDatabase() {
       await dbRun('INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)', [chave, valor]);
     }
 
-    // Seed: domingo como folga recorrente (se não existir)
+    // Seed: domingo como folga recorrente
     const folgaCount = await dbGet('SELECT COUNT(*) as count FROM folgas WHERE tipo = ? AND dia_semana = ?', ['dia_semana', 0]);
-    if (folgaCount.count === 0) {
+    if (folgaCount.count === 0 || folgaCount.count === '0') {
       await dbRun(
         'INSERT INTO folgas (tipo, dia_semana, descricao) VALUES (?, ?, ?)',
         ['dia_semana', 0, 'Domingo — fechado']
@@ -207,7 +266,6 @@ async function initializeDatabase() {
   }
 }
 
-// Funções Helpers
 const dbHelpers = {
   addLog: async (tipo, message) => {
     try {
@@ -225,7 +283,6 @@ const dbHelpers = {
     return dbRun('DELETE FROM logs_automacao');
   },
 
-  // Autenticação Admin
   getAdminByUsername: (username) => {
     return dbGet('SELECT * FROM admin WHERE username = ?', [username]);
   },
@@ -242,68 +299,76 @@ const dbHelpers = {
     return dbRun('UPDATE admin SET email = ? WHERE id = ?', [email, id]);
   },
 
-  // Clientes e Agendamentos
   getOrCreateCliente: async (nome, telefone, email) => {
     const existing = await dbGet('SELECT * FROM clientes WHERE telefone = ?', [telefone]);
     if (existing) {
       if (email && existing.email !== email) {
         await dbRun('UPDATE clientes SET email = ?, nome = ? WHERE id = ?', [email, nome, existing.id]);
-        existing.email = email;
-        existing.nome = nome;
       }
       return existing;
     }
-    const result = await dbRun('INSERT INTO clientes (nome, telefone, email) VALUES (?, ?, ?)', [nome, telefone, email]);
-    return { id: result.lastID, nome, telefone, email };
+    const result = await dbRun('INSERT INTO clientes (nome, telefone, email) VALUES (?, ?, ?)', [nome, telefone, email || null]);
+    const insertId = result.lastID;
+    return { id: insertId, nome, telefone, email };
+  },
+
+  createAgendamento: async (clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite) => {
+    const result = await dbRun(
+      'INSERT INTO agendamentos (cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite]
+    );
+    return { id: result.lastID, clienteId, servicoId, servicoNome, data, hora, statusPix, origemSite };
   },
 
   checkDoubleBooking: async (data, hora) => {
-    const booking = await dbGet('SELECT * FROM agendamentos WHERE data = ? AND hora = ?', [data, hora]);
-    return !!booking;
+    const row = await dbGet('SELECT COUNT(*) as count FROM agendamentos WHERE data = ? AND hora = ?', [data, hora]);
+    return (row?.count || 0) > 0 || row?.count === '1';
   },
 
-  createAgendamento: async (cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site) => {
-    const result = await dbRun(
-      'INSERT INTO agendamentos (cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site]
+  getAgendamentosSemana: (dataInicio, dataFim) => {
+    return dbAll(
+      `SELECT a.*, c.nome as cliente_nome, c.telefone as cliente_telefone, c.email as cliente_email 
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       WHERE a.data >= ? AND a.data <= ?
+       ORDER BY a.data ASC, a.hora ASC`,
+      [dataInicio, dataFim]
     );
-    return { id: result.lastID, cliente_id, servico_id, servico_nome, data, hora, status_pix, origem_site };
   },
 
-  getAgendamentos: () => {
-    return dbAll(`
-      SELECT a.*, c.nome as cliente_nome, c.telefone as cliente_telefone, c.email as cliente_email
-      FROM agendamentos a
-      JOIN clientes c ON a.cliente_id = c.id
-      ORDER BY a.data DESC, a.hora DESC
-    `);
+  getAllAgendamentos: () => {
+    return dbAll(
+      `SELECT a.*, c.nome as cliente_nome, c.telefone as cliente_telefone, c.email as cliente_email 
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       ORDER BY a.data DESC, a.hora DESC`
+    );
   },
 
   deleteAgendamento: (id) => {
     return dbRun('DELETE FROM agendamentos WHERE id = ?', [id]);
   },
 
-  // CRUD de Serviços
+  // Serviços CRUD
   getServicos: () => {
-    return dbAll('SELECT * FROM servicos ORDER BY nome');
+    return dbAll('SELECT * FROM servicos ORDER BY id ASC');
   },
 
   getServicoById: (id) => {
     return dbGet('SELECT * FROM servicos WHERE id = ?', [id]);
   },
 
-  createServico: async (nome, preco, duracao_min, descricao, imagem) => {
-    const result = await dbRun(
+  createServico: (nome, preco, duracaoMin, descricao, imagem) => {
+    return dbRun(
       'INSERT INTO servicos (nome, preco, duracao_min, descricao, imagem) VALUES (?, ?, ?, ?, ?)',
-      [nome, preco, duracao_min, descricao, imagem]
+      [nome, preco, duracaoMin, descricao || null, imagem || null]
     );
-    return { id: result.lastID, nome, preco, duracao_min, descricao, imagem };
   },
 
-  updateServico: (id, nome, preco, duracao_min, descricao, imagem) => {
+  updateServico: (id, nome, preco, duracaoMin, descricao, imagem) => {
     return dbRun(
-      'UPDATE servicos SET nome = ?, preco = ?, duracao_min = ?, descricao = ?, imagem = COALESCE(?, imagem) WHERE id = ?',
-      [nome, preco, duracao_min, descricao, imagem, id]
+      'UPDATE servicos SET nome = ?, preco = ?, duracao_min = ?, descricao = ?, imagem = ? WHERE id = ?',
+      [nome, preco, duracaoMin, descricao || null, imagem || null, id]
     );
   },
 
@@ -311,84 +376,74 @@ const dbHelpers = {
     return dbRun('DELETE FROM servicos WHERE id = ?', [id]);
   },
 
-  // CRUD de Portfólio (Antes/Depois)
+  // Portfólio CRUD
   getPortfolio: () => {
-    return dbAll('SELECT * FROM portfolio ORDER BY created_at DESC');
+    return dbAll('SELECT * FROM portfolio ORDER BY id DESC');
   },
 
-  createPortfolioItem: async (titulo, imagem_antes, imagem_depois) => {
-    const result = await dbRun(
+  createPortfolioItem: (titulo, imagemAntes, imagemDepois) => {
+    return dbRun(
       'INSERT INTO portfolio (titulo, imagem_antes, imagem_depois) VALUES (?, ?, ?)',
-      [titulo, imagem_antes, imagem_depois]
+      [titulo, imagemAntes, imagemDepois]
     );
-    return { id: result.lastID, titulo, imagem_antes, imagem_depois };
   },
 
   deletePortfolioItem: (id) => {
     return dbRun('DELETE FROM portfolio WHERE id = ?', [id]);
   },
 
-  // Slots ocupados (para o calendário semanal)
-  getBookedSlots: (startDate, endDate) => {
-    return dbAll(
-      'SELECT data, hora FROM agendamentos WHERE data >= ? AND data <= ? ORDER BY data, hora',
-      [startDate, endDate]
-    );
+  // Folgas e Agenda Config
+  getFolgas: () => {
+    return dbAll('SELECT * FROM folgas ORDER BY created_at DESC');
   },
 
-  // ── Folgas & Feriados ──────────────────────────────────────────
-  getFolgas: () => dbAll('SELECT * FROM folgas ORDER BY tipo, dia_semana, data'),
-
-  createFolga: async (tipo, data, dia_semana, descricao) => {
-    const result = await dbRun(
+  createFolga: (tipo, data, diaSemana, descricao) => {
+    return dbRun(
       'INSERT INTO folgas (tipo, data, dia_semana, descricao) VALUES (?, ?, ?, ?)',
-      [tipo, data || null, dia_semana !== undefined ? dia_semana : null, descricao]
+      [tipo, data || null, diaSemana !== null ? Number(diaSemana) : null, descricao]
     );
-    return { id: result.lastID, tipo, data, dia_semana, descricao };
   },
 
-  deleteFolga: (id) => dbRun('DELETE FROM folgas WHERE id = ?', [id]),
+  deleteFolga: (id) => {
+    return dbRun('DELETE FROM folgas WHERE id = ?', [id]);
+  },
 
-  // ── Configurações ──────────────────────────────────────────────
-  getConfig: (chave) => dbGet('SELECT valor FROM configuracoes WHERE chave = ?', [chave]),
-
-  getAllConfigs: () => dbAll('SELECT chave, valor FROM configuracoes'),
+  getConfig: async (chave) => {
+    const row = await dbGet('SELECT valor FROM configuracoes WHERE chave = ?', [chave]);
+    return row ? row.valor : null;
+  },
 
   setConfig: async (chave, valor) => {
-    await dbRun(
-      'INSERT INTO configuracoes (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor',
-      [chave, valor]
-    );
+    const existing = await dbGet('SELECT valor FROM configuracoes WHERE chave = ?', [chave]);
+    if (existing !== null) {
+      return dbRun('UPDATE configuracoes SET valor = ? WHERE chave = ?', [valor, chave]);
+    }
+    return dbRun('INSERT INTO configuracoes (chave, valor) VALUES (?, ?)', [chave, valor]);
   },
 
-  // Estatísticas
   getStats: async () => {
     const totalAppointments = await dbGet('SELECT COUNT(*) as count FROM agendamentos');
     const totalClients = await dbGet('SELECT COUNT(*) as count FROM clientes');
     const totalServices = await dbGet('SELECT COUNT(*) as count FROM servicos');
     
-    // Obter faturamento (calculado baseado em 20% do sinal dos agendamentos confirmados)
-    // Para simplificar, o sinal de 20% é calculado sobre a média de preço dos serviços ou o preço específico.
-    // Vamos somar os valores dos serviços agendados e aplicar 20%.
     const faturamentoRow = await dbGet(`
       SELECT SUM(s.preco) as total_bruto
       FROM agendamentos a
-      JOIN servicos s ON a.servico_id = s.id OR a.servico_nome = s.nome
+      JOIN servicos s ON a.servico_id = CAST(s.id AS TEXT) OR a.servico_nome = s.nome
       WHERE a.status_pix = 'pago'
     `);
     const faturamentoBruto = faturamentoRow?.total_bruto || 0;
     const faturamentoSinal = faturamentoBruto * 0.20;
 
     return {
-      totalAppointments: totalAppointments?.count || 0,
-      totalClients: totalClients?.count || 0,
-      totalServices: totalServices?.count || 0,
+      totalAppointments: Number(totalAppointments?.count) || 0,
+      totalClients: Number(totalClients?.count) || 0,
+      totalServices: Number(totalServices?.count) || 0,
       revenueSinal: parseFloat(faturamentoSinal.toFixed(2)),
       revenueTotal: parseFloat(faturamentoBruto.toFixed(2))
     };
   },
 
-  // ── Depoimentos ─────────────────────────────────────────────────────────
   createDepoimento: (nome, servico, texto, foto, rating) => {
     return dbRun(
       `INSERT INTO depoimentos (nome, servico, texto, foto, rating, status) VALUES (?, ?, ?, ?, ?, 'pendente')`,
