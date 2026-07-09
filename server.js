@@ -848,18 +848,38 @@ app.post('/api/webhook/agendamento', async (req, res) => {
 
     await db.addLog('success', `[Agenda] Horário reservado e agendamento ID #${novoAgendamento.id} gravado no banco.`);
 
-    // 5. Disparar Mensagem de Boas-vindas/Confirmação no WhatsApp
+    // 5. Enviar WhatsApp real via CallMeBot
     let whatsappEnviado = false;
-    if (process.env.WHATSAPP_SIMULATION !== 'false') {
-      const msgWhatsApp = `Olá, ${nome}! ✨ Seu agendamento para *${servico_nome}* no dia *${data}* às *${hora}* foi confirmado com sucesso no Studio Ana Dias. Já recebemos o seu Pix de sinal de 20%. Aguardamos você! 🌸`;
-      await db.addLog('success', `[WhatsApp] Mensagem de boas-vindas enviada para +${telefone}. Conteúdo: "${msgWhatsApp}"`);
-      
-      // Notificação para o administrador principal
-      const adminWhatsApp = `19992471473`;
-      const msgAdmin = `📢 *Novo Agendamento Confirmado!* \n\n👤 *Cliente:* ${nome}\n📞 *WhatsApp:* ${telefone}\n✨ *Procedimento:* ${servico_nome}\n📅 *Data:* ${data}\n⏰ *Horário:* ${hora}\n💰 *Sinal Pix:* Confirmado 20%`;
-      await db.addLog('success', `[WhatsApp Notificação Admin] Alerta enviado para +${adminWhatsApp}. Conteúdo: "${msgAdmin}"`);
-      
-      whatsappEnviado = true;
+    const callmebotKey = process.env.CALLMEBOT_API_KEY;
+    const adminPhone   = process.env.ADMIN_PHONE || '5519992471473';
+
+    async function sendWhatsApp(phone, message) {
+      const encodedMsg = encodeURIComponent(message);
+      const cleanPhone = phone.replace(/\D/g, '');
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanPhone}&text=${encodedMsg}&apikey=${callmebotKey}`;
+      const r = await fetch(url);
+      return r.ok;
+    }
+
+    if (callmebotKey) {
+      try {
+        // Mensagem para a CLIENTE
+        const clientPhone = telefone.replace(/\D/g, '');
+        if (clientPhone.length >= 10) {
+          const msgCliente = `Olá, ${nome}! ✨\n\nSeu agendamento no *Studio Julia Dias* foi confirmado!\n\n📋 *Serviço:* ${servico_nome}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Horário:* ${hora}\n💚 *Sinal Pix:* Recebido!\n\nAguardamos você! 🌸`;
+          const cOk = await sendWhatsApp(`55${clientPhone}`, msgCliente).catch(() => false);
+          await db.addLog(cOk ? 'success' : 'error', `[WhatsApp] Cliente ${nome}: ${cOk ? 'enviado' : 'falhou'}`);
+        }
+        // Alerta para o ADMIN
+        const msgAdmin = `📢 *Novo Agendamento!*\n\n👤 *Cliente:* ${nome}\n📞 *Tel:* ${telefone}\n✨ *Serviço:* ${servico_nome}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Horário:* ${hora}\n💰 *Pix:* ✅ Confirmado`;
+        const aOk = await sendWhatsApp(adminPhone, msgAdmin).catch(() => false);
+        await db.addLog(aOk ? 'success' : 'error', `[WhatsApp Admin] Alerta: ${aOk ? 'enviado' : 'falhou'}`);
+        whatsappEnviado = true;
+      } catch (wErr) {
+        await db.addLog('error', `[WhatsApp] Erro: ${wErr.message}`);
+      }
+    } else {
+      await db.addLog('info', `[WhatsApp] CALLMEBOT_API_KEY não configurada. Configure no Render para receber alertas.`);
     }
 
     // 6. Adicionar Evento ao Google Calendar
