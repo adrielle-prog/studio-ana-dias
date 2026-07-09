@@ -10,10 +10,352 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'studio-ana-dias-super-secret-key-2026';
 
+// Flag que indica se o banco está pronto
+let dbReady = false;
+
 app.use(cors());
-// Aumentar o limite de tamanho do JSON para suportar imagens em Base64
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// ── Endpoint de saúde (sempre responde, independente do banco) ────────────────
+app.get('/api/health', (req, res) => {
+  if (dbReady) {
+    res.json({ status: 'ok', db: 'ready' });
+  } else {
+    res.status(503).json({ status: 'loading', db: 'initializing' });
+  }
+});
+
+// ── Splash Screen enquanto o banco inicializa ─────────────────────────────────
+const SPLASH_HTML = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Julia Dias — Carregando...</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a060f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Partículas de fundo */
+    .bg-glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      animation: pulse-glow 4s ease-in-out infinite alternate;
+    }
+    .bg-glow-1 { width: 400px; height: 400px; background: #9d4edd; top: -100px; left: -100px; }
+    .bg-glow-2 { width: 300px; height: 300px; background: #ff477e; bottom: -80px; right: -80px; animation-delay: -2s; }
+
+    @keyframes pulse-glow {
+      from { opacity: 0.12; transform: scale(1); }
+      to   { opacity: 0.22; transform: scale(1.1); }
+    }
+
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      animation: fade-in 0.8s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Olho animado ── */
+    .eye-wrap {
+      position: relative;
+      width: 120px;
+      height: 70px;
+    }
+
+    .eye {
+      position: relative;
+      width: 120px;
+      height: 60px;
+      animation: blink 3.5s ease-in-out infinite;
+    }
+
+    /* Contorno do olho (forma de amêndoa com clip-path) */
+    .eye-ball {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      background: radial-gradient(circle at 40% 40%, #c084fc, #7c3aed 50%, #1e0a3c);
+      box-shadow: 0 0 30px rgba(157, 78, 221, 0.5);
+      overflow: hidden;
+    }
+
+    /* Pupila */
+    .eye-pupil {
+      position: absolute;
+      width: 34px; height: 34px;
+      background: radial-gradient(circle at 35% 35%, #4a1d96, #0a060f);
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: pupil-move 5s ease-in-out infinite;
+    }
+
+    /* Brilho */
+    .eye-shine {
+      position: absolute;
+      width: 10px; height: 10px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 50%;
+      top: 28%; left: 36%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Pálpebra superior (fecha o olho) */
+    .eyelid-top {
+      position: absolute;
+      width: 100%;
+      height: 50%;
+      background: #0a060f;
+      top: 0;
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      transform-origin: top center;
+      z-index: 10;
+    }
+
+    /* Pálpebra inferior */
+    .eyelid-bottom {
+      position: absolute;
+      width: 100%;
+      height: 50%;
+      background: #0a060f;
+      bottom: 0;
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+      transform-origin: bottom center;
+      z-index: 10;
+    }
+
+    @keyframes blink {
+      0%,  35% { clip-path: ellipse(50% 50% at 50% 50%); }
+      40%       { clip-path: ellipse(50% 2%  at 50% 50%); }
+      45%       { clip-path: ellipse(50% 50% at 50% 50%); }
+      100%      { clip-path: ellipse(50% 50% at 50% 50%); }
+    }
+
+    @keyframes pupil-move {
+      0%,100% { transform: translate(-50%, -50%); }
+      30%     { transform: translate(-60%, -50%); }
+      60%     { transform: translate(-40%, -55%); }
+    }
+
+    /* ── Cílios superiores ── */
+    .lashes {
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      display: flex;
+      justify-content: space-around;
+      z-index: 20;
+    }
+
+    .lash {
+      width: 3px;
+      border-radius: 2px;
+      background: linear-gradient(to top, #c084fc, #e879f9);
+      transform-origin: bottom center;
+      animation: lash-wave 3.5s ease-in-out infinite;
+    }
+
+    .lash:nth-child(1) { height: 14px; transform: rotate(-28deg); animation-delay: 0s; }
+    .lash:nth-child(2) { height: 18px; transform: rotate(-14deg); animation-delay: 0.05s; }
+    .lash:nth-child(3) { height: 22px; transform: rotate(-4deg);  animation-delay: 0.1s; }
+    .lash:nth-child(4) { height: 22px; transform: rotate(4deg);   animation-delay: 0.15s; }
+    .lash:nth-child(5) { height: 18px; transform: rotate(14deg);  animation-delay: 0.2s; }
+    .lash:nth-child(6) { height: 14px; transform: rotate(28deg);  animation-delay: 0.25s; }
+
+    @keyframes lash-wave {
+      0%,100% { opacity: 1; }
+      40%, 45% { opacity: 0.1; }
+    }
+
+    /* ── Textos ── */
+    .splash-logo-text {
+      text-align: center;
+    }
+
+    .splash-logo-text h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 2.2rem;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #e9d5ff, #c084fc, #f0abfc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.25rem;
+    }
+
+    .splash-logo-text p {
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* ── Barra de progresso ── */
+    .splash-status {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      width: 200px;
+    }
+
+    .splash-status span {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.08em;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #9d4edd, #f0abfc);
+      border-radius: 2px;
+      animation: fill-progress 20s linear forwards;
+    }
+
+    @keyframes fill-progress {
+      0%   { width: 0%; }
+      80%  { width: 88%; }
+      100% { width: 95%; }
+    }
+
+    /* ── Fade out ao redirecionar ── */
+    body.leaving {
+      animation: fade-out 0.5s ease forwards;
+    }
+
+    @keyframes fade-out {
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="splash-container">
+    <!-- Olho animado com cílios -->
+    <div class="eye-wrap">
+      <div class="lashes">
+        <div class="lash"></div>
+        <div class="lash"></div>
+        <div class="lash"></div>
+        <div class="lash"></div>
+        <div class="lash"></div>
+        <div class="lash"></div>
+      </div>
+      <div class="eye">
+        <div class="eye-ball">
+          <div class="eye-pupil"></div>
+          <div class="eye-shine"></div>
+        </div>
+        <div class="eyelid-top"></div>
+        <div class="eyelid-bottom"></div>
+      </div>
+    </div>
+
+    <!-- Nome do Studio -->
+    <div class="splash-logo-text">
+      <h1>Studio Julia Dias</h1>
+      <p>Beauty &amp; Estética</p>
+    </div>
+
+    <!-- Status de carregamento -->
+    <div class="splash-status">
+      <span id="splash-msg">Acordando o servidor...</span>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const messages = [
+      'Acordando o servidor...',
+      'Conectando ao banco de dados...',
+      'Preparando seu atendimento...',
+      'Quase lá...'
+    ];
+    let msgIdx = 0;
+    const msgEl = document.getElementById('splash-msg');
+
+    // Rodar mensagens enquanto aguarda
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % messages.length;
+      msgEl.textContent = messages[msgIdx];
+    }, 4000);
+
+    // Polling para verificar quando o servidor está pronto
+    async function checkReady() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        if (data.status === 'ok') {
+          clearInterval(msgInterval);
+          msgEl.textContent = 'Pronto! Redirecionando...';
+          document.getElementById('progress-fill').style.width = '100%';
+          document.getElementById('progress-fill').style.transition = 'width 0.3s ease';
+          setTimeout(() => {
+            document.body.classList.add('leaving');
+            setTimeout(() => window.location.reload(), 500);
+          }, 600);
+          return;
+        }
+      } catch (e) { /* aguarda */ }
+      setTimeout(checkReady, 2000);
+    }
+
+    setTimeout(checkReady, 1500);
+  </script>
+</body>
+</html>`;
+
+// Middleware: exibe splash screen enquanto o banco não está pronto
+app.use((req, res, next) => {
+  if (dbReady) return next();
+  // Endpoints de saúde sempre passam
+  if (req.path === '/api/health') return next();
+  // Requisições de API retornam 503
+  if (req.path.startsWith('/api/')) {
+    return res.status(503).json({ status: 'loading', message: 'Servidor iniciando...' });
+  }
+  // Páginas HTML recebem a tela de splash
+  return res.send(SPLASH_HTML);
+});
 
 // Servir arquivos estáticos da pasta public
 app.use(express.static(path.join(__dirname, 'public')));
@@ -739,18 +1081,17 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Inicialização — aguarda o banco estar pronto antes de abrir o servidor
-async function boot() {
-  try {
-    await db.init();
-    console.log('Banco de dados pronto. Iniciando servidor...');
-    app.listen(PORT, () => {
-      console.log(`Servidor rodando em http://localhost:${PORT}`);
-    });
-  } catch (err) {
+// Inicialização — abre porta imediatamente, initializa DB em paralelo
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT} (aguardando DB...)`);
+});
+
+db.init()
+  .then(() => {
+    dbReady = true;
+    console.log('Banco de dados pronto! Aceitando requisições.');
+  })
+  .catch(err => {
     console.error('Falha ao inicializar banco de dados:', err);
     process.exit(1);
-  }
-}
-
-boot();
+  });
