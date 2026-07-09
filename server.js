@@ -739,36 +739,6 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Endpoint de debug do banco de dados (público temporariamente)
-app.get('/api/debug-db', async (req, res) => {
-  try {
-    const dbPath = path.join(__dirname, 'studio_ana_dias.db');
-    const isPostgres = !!process.env.DATABASE_URL;
-    
-    // Testa uma query simples
-    const testQuery = await db.getServicos();
-    
-    res.json({
-      success: true,
-      mode: isPostgres ? 'PostgreSQL' : 'SQLite',
-      postgresUrlExists: isPostgres,
-      databaseUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0,
-      sqlitePath: dbPath,
-      rowsCount: testQuery.length,
-      data: testQuery
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      mode: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
-      errorName: err.name,
-      errorMessage: err.message,
-      errorStack: err.stack,
-      databaseUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0
-    });
-  }
-});
-
 // Inicialização — aguarda o banco estar pronto antes de abrir o servidor
 async function boot() {
   try {
