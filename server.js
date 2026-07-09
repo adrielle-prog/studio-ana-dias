@@ -5,6 +5,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('./db');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -776,6 +777,121 @@ app.get('/api/slots', async (req, res) => {
 
 
 // ── Webhook Endpoint de Automação ──────────────────────────────────────────────
+// ── Função auxiliar: Enviar Notificação por E-mail (Admin e Cliente) ─────────
+async function enviarEmailsNotificacao(dadosCliente, dadosAgendamento, servicoNome) {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  const adminEmail = process.env.ADMIN_EMAIL || 'anajudiass1@icloud.com';
+
+  if (!emailUser || !emailPass) {
+    await db.addLog('info', '[E-mail] Notificações por e-mail desativadas (EMAIL_USER ou EMAIL_PASS ausente).');
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: emailUser,
+      pass: emailPass
+    }
+  });
+
+  const dataBr = dadosAgendamento.data.split('-').reverse().join('/');
+  const valorSinal = (dadosAgendamento.precoSinal || 0).toFixed(2);
+
+  // 1. Template de E-mail para a Cliente (Luxo Dark Violet)
+  if (dadosCliente.email) {
+    const htmlCliente = `
+      <div style="background-color: #050209; color: #f5f2f9; font-family: 'Outfit', 'Inter', sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border-radius: 16px; border: 1px solid rgba(162, 89, 255, 0.15);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <div style="display: inline-block; width: 45px; height: 45px; background: linear-gradient(135deg, #7c3aed, #c084fc); color: #fff; font-size: 20px; font-weight: bold; line-height: 45px; border-radius: 50%; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">AD</div>
+          <h2 style="font-size: 24px; font-weight: 300; letter-spacing: 2px; margin-top: 10px; color: #e9d5ff;">Studio Julia Dias</h2>
+          <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.4); margin: 0;">Beleza &amp; Cílios de Luxo</p>
+        </div>
+        
+        <div style="background-color: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+          <h3 style="color: #c084fc; margin-top: 0; font-size: 18px; font-weight: 400;">Olá, ${dadosCliente.nome}! ✨</h3>
+          <p style="color: #bbaec6; line-height: 1.6; font-size: 14px;">Seu agendamento foi pré-confirmado com sucesso! Já recebemos o envio do seu comprovante de Pix referente ao sinal de reserva.</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 14px;">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 8px 0; color: rgba(255,255,255,0.4);">Procedimento</td>
+              <td style="padding: 8px 0; text-align: right; color: #f5f2f9; font-weight: bold;">${servicoNome}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 8px 0; color: rgba(255,255,255,0.4);">Data</td>
+              <td style="padding: 8px 0; text-align: right; color: #f5f2f9; font-weight: bold;">${dataBr}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 8px 0; color: rgba(255,255,255,0.4);">Horário</td>
+              <td style="padding: 8px 0; text-align: right; color: #f5f2f9; font-weight: bold;">${dadosAgendamento.hora}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: rgba(255,255,255,0.4);">Sinal Pago</td>
+              <td style="padding: 8px 0; text-align: right; color: #4ade80; font-weight: bold;">R$ ${valorSinal} (20%)</td>
+            </tr>
+          </table>
+        </div>
+        
+        <p style="color: #bbaec6; font-size: 13px; text-align: center; line-height: 1.6;">
+          Nosso Studio está localizado em uma região privilegiada e preparado para te atender com o maior conforto e sofisticação. Caso precise remarcar, entre em contato com pelo menos 24 horas de antecedência.
+        </p>
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 2rem; padding-top: 1.5rem; text-align: center; font-size: 11px; color: rgba(255,255,255,0.3);">
+          Este é um e-mail automático enviado pelo sistema de agendamentos do Studio Julia Dias.<br>
+          Dúvidas? Entre em contato pelo WhatsApp: (19) 99924-71473
+        </div>
+      </div>
+    `;
+
+    try {
+      await transporter.sendMail({
+        from: `"Studio Julia Dias" <${emailUser}>`,
+        to: dadosCliente.email,
+        subject: `Confirmado: Seu agendamento para ${servicoNome} ✨`,
+        html: htmlCliente
+      });
+      await db.addLog('success', `[E-mail] Notificação enviada para cliente: ${dadosCliente.email}`);
+    } catch (err) {
+      await db.addLog('error', `[E-mail] Falha ao enviar para cliente: ${err.message}`);
+    }
+  }
+
+  // 2. Template de E-mail para a Administradora (Julia)
+  const htmlAdmin = `
+    <div style="background-color: #0a060f; color: #f2eef5; font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+      <h2 style="color: #e9d5ff; font-weight: 300; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-top: 0;">📢 Novo Agendamento Recebido</h2>
+      <p style="color: #bbaec6; font-size: 14px;">Um novo agendamento foi realizado pelo site e o Pix está aguardando sua validação no painel administrativo.</p>
+      
+      <div style="background-color: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; margin: 1.5rem 0; font-size: 14px;">
+        <p><strong>👤 Cliente:</strong> ${dadosCliente.nome}</p>
+        <p><strong>📞 Telefone:</strong> ${dadosCliente.telefone}</p>
+        <p><strong>📧 E-mail:</strong> ${dadosCliente.email || 'Não informado'}</p>
+        <p><strong>✨ Serviço:</strong> ${servicoNome}</p>
+        <p><strong>📅 Data:</strong> ${dataBr}</p>
+        <p><strong>⏰ Horário:</strong> ${dadosAgendamento.hora}</p>
+        <p><strong>💰 Valor Sinal:</strong> R$ ${valorSinal}</p>
+      </div>
+      
+      <p style="text-align: center; margin-top: 2rem;">
+        <a href="https://studio-juliadias.onrender.com/admin" style="background-color: #7c3aed; color: #fff; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Acessar Painel Admin</a>
+      </p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: `"Notificações Studio" <${emailUser}>`,
+      to: adminEmail,
+      subject: `📢 Novo agendamento: ${dadosCliente.nome} - ${servicoNome}`,
+      html: htmlAdmin
+    });
+    await db.addLog('success', `[E-mail Admin] Notificação de novo agendamento enviada para admin: ${adminEmail}`);
+  } catch (err) {
+    await db.addLog('error', `[E-mail Admin] Falha ao notificar admin por e-mail: ${err.message}`);
+  }
+}
+
 app.post('/api/webhook/agendamento', async (req, res) => {
   const { cliente, agendamento, metadados } = req.body;
   const timestamp = metadados?.timestamp || new Date().toISOString();
@@ -847,6 +963,14 @@ app.post('/api/webhook/agendamento', async (req, res) => {
     );
 
     await db.addLog('success', `[Agenda] Horário reservado e agendamento ID #${novoAgendamento.id} gravado no banco.`);
+
+    // Enviar E-mails de Notificação (Cliente e Admin) de forma assíncrona
+    const precoSinal = servico ? servico.preco * 0.20 : 0;
+    enviarEmailsNotificacao(
+      { nome, telefone, email },
+      { data, hora, precoSinal },
+      servico_nome
+    ).catch(err => console.error('Falha de notificação por e-mail:', err));
 
     // 5. Enviar WhatsApp real via CallMeBot
     let whatsappEnviado = false;
