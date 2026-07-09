@@ -45,6 +45,17 @@
   <!-- ─── ADMIN PANEL ──────────────────────────────────── -->
   <div id="admin-panel" class="hidden">
 
+    <!-- Barra superior mobile -->
+    <div class="mobile-top-bar">
+      <div class="logo-container">
+        <div class="logo-circle small">AD</div>
+        <h2>Studio Ana Dias</h2>
+      </div>
+      <button class="btn-menu-toggle" id="btn-menu-toggle" aria-label="Abrir Menu">
+        <i data-lucide="menu"></i>
+      </button>
+    </div>
+
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -729,6 +740,30 @@
 
     document.getElementById('btn-logout').addEventListener('click', logout);
 
+    // ── Lógica do Menu Hamburger (Mobile) ──────────────────
+    const btnMenuToggle = document.getElementById('btn-menu-toggle');
+    const sidebarEl = document.querySelector('.sidebar');
+    const adminPanel = document.getElementById('admin-panel');
+
+    if (btnMenuToggle && sidebarEl) {
+      btnMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebarEl.classList.toggle('open');
+      });
+
+      // Fechar menu ao clicar no painel principal
+      document.querySelector('.admin-main').addEventListener('click', () => {
+        sidebarEl.classList.remove('open');
+      });
+
+      // Fechar menu ao clicar no backdrop ou em outro local
+      document.addEventListener('click', (e) => {
+        if (!sidebarEl.contains(e.target) && e.target !== btnMenuToggle) {
+          sidebarEl.classList.remove('open');
+        }
+      });
+    }
+
     // ── Tab Navigation ─────────────────────────────────────
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -747,6 +782,11 @@
         else if (tab === 'portfolio') loadPortfolio();
         else if (tab === 'logs') loadLogs();
         else if (tab === 'configuracoes') { loadPixConfig(); loadSobreFotos(); }
+
+        // Fechar menu lateral no celular após trocar de aba
+        if (window.innerWidth <= 850 && sidebarEl) {
+          sidebarEl.classList.remove('open');
+        }
       });
     });
 

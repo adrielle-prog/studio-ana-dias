@@ -957,3 +957,136 @@ textarea { resize: vertical; min-height: 80px; }
   margin-top: 0.75rem;
   animation: fadeIn 0.2s ease;
 }
+
+/* ── Responsividade Mobile (Painel Admin) ────────────────────────── */
+@media (max-width: 850px) {
+  #admin-panel {
+    grid-template-columns: 1fr;
+    padding-top: 60px; /* Espaço para a barra superior no mobile */
+  }
+
+  /* Cabeçalho superior visível apenas no mobile */
+  .mobile-top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    z-index: 1000;
+  }
+
+  .mobile-top-bar .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .mobile-top-bar h2 {
+    font-size: 1rem;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .btn-menu-toggle {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-menu-toggle:hover {
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* Sidebar vira um Drawer lateral que desliza */
+  .sidebar {
+    position: fixed;
+    top: 60px; left: -260px; bottom: 0;
+    width: 250px;
+    height: calc(100vh - 60px);
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 15px 0 35px rgba(0, 0, 0, 0.6);
+  }
+
+  .sidebar.open {
+    transform: translateX(260px);
+  }
+
+  .admin-main {
+    padding: 1.25rem 1rem;
+  }
+
+  /* Grids de estatísticas */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1.25rem;
+  }
+
+  /* Formulários em geral */
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Tabelas responsivas (com rolagem lateral) */
+  .table-container {
+    overflow-x: auto;
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table {
+    min-width: 600px; /* Força scroll horizontal ao invés de deformar */
+  }
+
+  /* Modal largura mobile */
+  .modal-card {
+    padding: 1.5rem;
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+
+  .modal-card.wide {
+    width: calc(100% - 2rem);
+    max-width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  /* Botões e Inputs */
+  .input-group input, 
+  .input-group select, 
+  .input-group textarea {
+    font-size: 16px; /* Evita zoom automático chato no Safari/iOS */
+  }
+}
+
+/* Ocultar barra superior no desktop */
+@media (min-width: 851px) {
+  .mobile-top-bar {
+    display: none !important;
+  }
+}
