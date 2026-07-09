@@ -201,6 +201,77 @@
       </div>
     </section>
 
+    <!-- Depoimentos -->
+    <section id="depoimentos" class="client-section reveal">
+      <div class="section-title-container">
+        <span class="section-subtitle">Experiências Reais</span>
+        <h2>O que nossas clientes dizem</h2>
+        <p>Depoimentos de quem já viveu a experiência Studio Ana Dias.</p>
+      </div>
+
+      <!-- Grid de depoimentos aprovados -->
+      <div class="depo-grid" id="depo-grid">
+        <div class="loading-spinner">Carregando depoimentos...</div>
+      </div>
+
+      <!-- Formulário de envio de depoimento -->
+      <div class="depo-form-wrapper reveal">
+        <div class="depo-form-header">
+          <i data-lucide="message-square-plus"></i>
+          <div>
+            <h3>Deixe seu depoimento</h3>
+            <p>Sua opinião aparecerá no site após aprovação 🌸</p>
+          </div>
+        </div>
+
+        <form id="depo-form" class="depo-form" novalidate>
+          <!-- Avaliação em estrelas -->
+          <div class="star-rating-group">
+            <span>Sua avaliação:</span>
+            <div class="star-rating" id="star-rating">
+              <button type="button" data-val="1">★</button>
+              <button type="button" data-val="2">★</button>
+              <button type="button" data-val="3">★</button>
+              <button type="button" data-val="4">★</button>
+              <button type="button" data-val="5" class="active">★</button>
+            </div>
+          </div>
+          <input type="hidden" id="depo-rating" value="5">
+
+          <div class="depo-form-row">
+            <div class="input-group">
+              <label for="depo-nome">Seu nome *</label>
+              <input type="text" id="depo-nome" placeholder="Ex: Mariana S." maxlength="60" required>
+            </div>
+            <div class="input-group">
+              <label for="depo-servico">Procedimento realizado</label>
+              <input type="text" id="depo-servico" placeholder="Ex: Extensão de Cílios" maxlength="80">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="depo-texto">Seu depoimento *</label>
+            <textarea id="depo-texto" rows="4" placeholder="Conte como foi sua experiência..." maxlength="600" required></textarea>
+          </div>
+
+          <!-- Upload de foto opcional -->
+          <div class="depo-foto-area">
+            <label class="depo-foto-label" for="depo-foto-input">
+              <i data-lucide="camera"></i>
+              <span id="depo-foto-label-text">Adicionar foto (opcional)</span>
+            </label>
+            <input type="file" id="depo-foto-input" accept="image/*" class="hidden-file">
+            <div id="depo-foto-preview" class="depo-foto-preview" style="display:none;"></div>
+          </div>
+
+          <button type="submit" class="btn-primary full-w" id="btn-depo-submit">
+            <i data-lucide="send"></i> Enviar Depoimento
+          </button>
+          <div id="depo-msg" class="depo-msg hidden"></div>
+        </form>
+      </div>
+    </section>
+
   </div><!-- /app-container -->
 
   <!-- Footer -->
@@ -747,11 +818,140 @@
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // ── Depoimentos ───────────────────────────────────────────────────────
+    async function fetchDepoimentos() {
+      try {
+        const res  = await fetch('/api/depoimentos');
+        const data = await res.json();
+        renderDepoimentos(data);
+      } catch { 
+        document.getElementById('depo-grid').innerHTML = '<p style="color:var(--text-muted);text-align:center">Não foi possível carregar os depoimentos.</p>';
+      }
+    }
+
+    function renderDepoimentos(list) {
+      const grid = document.getElementById('depo-grid');
+      if (!list.length) {
+        grid.innerHTML = '<p class="depo-empty">Seja a primeira a deixar seu depoimento! 🌸</p>';
+        return;
+      }
+      grid.innerHTML = list.map(d => {
+        const stars = '★'.repeat(d.rating || 5) + '☆'.repeat(5 - (d.rating || 5));
+        const fotoHtml = d.foto
+          ? `<div class="depo-card-foto"><img src="${esc(d.foto)}" alt="Foto de ${esc(d.nome)}"></div>`
+          : '';
+        const initials = d.nome.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+        return `
+          <article class="depo-card">
+            ${fotoHtml}
+            <div class="depo-card-body">
+              <div class="depo-card-stars">${stars}</div>
+              <p class="depo-card-texto">"${esc(d.texto)}"</p>
+              <div class="depo-card-author">
+                <div class="depo-avatar">${initials}</div>
+                <div>
+                  <strong>${esc(d.nome)}</strong>
+                  ${d.servico ? `<small>${esc(d.servico)}</small>` : ''}
+                </div>
+              </div>
+            </div>
+          </article>`;
+      }).join('');
+    }
+
+    // Estrelas interativas
+    let depoFotoBase64 = null;
+    document.querySelectorAll('#star-rating button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = Number(btn.dataset.val);
+        document.getElementById('depo-rating').value = val;
+        document.querySelectorAll('#star-rating button').forEach((b, i) => {
+          b.classList.toggle('active', i < val);
+        });
+      });
+      btn.addEventListener('mouseenter', () => {
+        const val = Number(btn.dataset.val);
+        document.querySelectorAll('#star-rating button').forEach((b, i) => {
+          b.classList.toggle('hover', i < val);
+        });
+      });
+      btn.addEventListener('mouseleave', () => {
+        document.querySelectorAll('#star-rating button').forEach(b => b.classList.remove('hover'));
+      });
+    });
+
+    // Preview de foto
+    document.getElementById('depo-foto-input').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        depoFotoBase64 = evt.target.result;
+        const preview = document.getElementById('depo-foto-preview');
+        preview.style.backgroundImage = `url('${depoFotoBase64}')`;
+        preview.style.display = 'block';
+        document.getElementById('depo-foto-label-text').textContent = 'Foto selecionada ✓';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Envio do formulário
+    document.getElementById('depo-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const nome   = document.getElementById('depo-nome').value.trim();
+      const servico= document.getElementById('depo-servico').value.trim();
+      const texto  = document.getElementById('depo-texto').value.trim();
+      const rating = Number(document.getElementById('depo-rating').value);
+      const msg    = document.getElementById('depo-msg');
+
+      if (!nome || !texto) {
+        msg.textContent = 'Por favor, preencha seu nome e depoimento.';
+        msg.className   = 'depo-msg error';
+        return;
+      }
+
+      const btn = document.getElementById('btn-depo-submit');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-circle"></i> Enviando...';
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/depoimentos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, servico, texto, foto: depoFotoBase64, rating })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.textContent = data.message;
+          msg.className   = 'depo-msg success';
+          e.target.reset();
+          depoFotoBase64 = null;
+          document.getElementById('depo-foto-preview').style.display = 'none';
+          document.getElementById('depo-foto-label-text').textContent = 'Adicionar foto (opcional)';
+          document.querySelectorAll('#star-rating button').forEach((b,i) => b.classList.toggle('active', i < 4));
+          document.getElementById('depo-rating').value = 5;
+        } else {
+          msg.textContent = data.error || 'Erro ao enviar depoimento.';
+          msg.className   = 'depo-msg error';
+        }
+      } catch {
+        msg.textContent = 'Erro de conexão. Tente novamente.';
+        msg.className   = 'depo-msg error';
+      } finally {
+        msg.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send"></i> Enviar Depoimento';
+        lucide.createIcons();
+      }
+    });
+
     // ── Boot ─────────────────────────────────────────────────────────────
     fetchServices();
     fetchPortfolio();
     fetchPix();
     fetchSobreFotos();
+    fetchDepoimentos();
     setTimeout(setupBeforeAfterSliders, 800);
     
     // Configurar observadores de animação no boot posterior

@@ -132,6 +132,20 @@ async function initializeDatabase() {
       )
     `);
 
+    // Tabela de depoimentos de clientes
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS depoimentos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        servico TEXT,
+        texto TEXT NOT NULL,
+        foto TEXT,
+        rating INTEGER DEFAULT 5,
+        status TEXT DEFAULT 'pendente',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('Tabelas do banco de dados inicializadas.');
 
     // Seed admin — usa hash persistido no env var do Render se disponível
@@ -372,6 +386,30 @@ const dbHelpers = {
       revenueSinal: parseFloat(faturamentoSinal.toFixed(2)),
       revenueTotal: parseFloat(faturamentoBruto.toFixed(2))
     };
+  },
+
+  // ── Depoimentos ─────────────────────────────────────────────────────────
+  createDepoimento: (nome, servico, texto, foto, rating) => {
+    return dbRun(
+      `INSERT INTO depoimentos (nome, servico, texto, foto, rating, status) VALUES (?, ?, ?, ?, ?, 'pendente')`,
+      [nome, servico || null, texto, foto || null, rating || 5]
+    );
+  },
+
+  getDepoimentosAprovados: () => {
+    return dbAll(`SELECT * FROM depoimentos WHERE status = 'aprovado' ORDER BY created_at DESC`);
+  },
+
+  getAllDepoimentos: () => {
+    return dbAll(`SELECT * FROM depoimentos ORDER BY status ASC, created_at DESC`);
+  },
+
+  updateDepoimentoStatus: (id, status) => {
+    return dbRun(`UPDATE depoimentos SET status = ? WHERE id = ?`, [status, id]);
+  },
+
+  deleteDepoimento: (id) => {
+    return dbRun(`DELETE FROM depoimentos WHERE id = ?`, [id]);
   }
 };
 

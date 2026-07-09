@@ -1090,3 +1090,118 @@ textarea { resize: vertical; min-height: 80px; }
     display: none !important;
   }
 }
+
+/* ── Estilos de Depoimentos no Admin ────────────────────────── */
+.depo-admin-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.depo-filter-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.depo-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.depo-filter-btn.active {
+  background: var(--purple-soft);
+  border-color: var(--purple);
+  color: var(--text-primary);
+}
+
+.depo-admin-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.depo-admin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.depo-admin-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.depo-admin-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.depo-admin-foto {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.depo-admin-info strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.depo-admin-info small {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.1rem;
+}
+
+.depo-admin-stars {
+  color: #f4b942;
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+  letter-spacing: 1px;
+}
+
+.depo-admin-texto {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.depo-admin-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-green { background: var(--green-soft); color: var(--green); }
+.badge-gold { background: var(--gold-soft); color: var(--gold); }
+.badge-red { background: var(--red-soft); color: var(--red); }
+

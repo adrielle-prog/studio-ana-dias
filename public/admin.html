@@ -85,6 +85,9 @@
         <button class="nav-item" data-tab="logs">
           <i data-lucide="terminal"></i> Logs
         </button>
+        <button class="nav-item" data-tab="depoimentos">
+          <i data-lucide="message-square"></i> Depoimentos
+        </button>
         <button class="nav-item" data-tab="configuracoes">
           <i data-lucide="settings-2"></i> Configurações
         </button>
@@ -440,6 +443,31 @@
         </div>
       </div>
 
+      <!-- ── Depoimentos Tab ──────────────────────────────── -->
+      <div class="tab-content hidden" id="tab-depoimentos">
+        <div class="page-header between">
+          <div>
+            <h2>Depoimentos</h2>
+            <p>Aprove, rejeite ou exclua os depoimentos enviados pelas clientes</p>
+          </div>
+          <button class="btn-ghost sm" onclick="loadDepoimentos()">
+            <i data-lucide="refresh-cw"></i> Atualizar
+          </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="depo-admin-filters">
+          <button class="depo-filter-btn active" data-filter="pendente">⏳ Pendentes</button>
+          <button class="depo-filter-btn" data-filter="aprovado">✅ Aprovados</button>
+          <button class="depo-filter-btn" data-filter="rejeitado">❌ Rejeitados</button>
+          <button class="depo-filter-btn" data-filter="todos">📋 Todos</button>
+        </div>
+
+        <div id="depo-admin-list" class="depo-admin-list">
+          <p class="empty-row">Carregando depoimentos...</p>
+        </div>
+      </div>
+
       <!-- ── Configurações Tab ──────────────────────────── -->
       <div class="tab-content hidden" id="tab-configuracoes">
         <div class="page-header">
@@ -782,6 +810,7 @@
         else if (tab === 'portfolio') loadPortfolio();
         else if (tab === 'logs') loadLogs();
         else if (tab === 'configuracoes') { loadPixConfig(); loadSobreFotos(); }
+        else if (tab === 'depoimentos') loadDepoimentos();
 
         // Fechar menu lateral no celular após trocar de aba
         if (window.innerWidth <= 850 && sidebarEl) {
@@ -1443,6 +1472,90 @@
         btn.innerHTML = '<i data-lucide="upload"></i> Salvar Novas Fotos';
         lucide.createIcons();
       }
+    });
+
+    // ── Depoimentos ──────────────────────────────────────────────────────
+    let allDepoimentos = [];
+    let depoFilter = 'pendente';
+
+    async function loadDepoimentos() {
+      try {
+        const res  = await apiFetch('/api/admin/depoimentos');
+        allDepoimentos = await res.json();
+        renderDepoimentosAdmin();
+      } catch {
+        document.getElementById('depo-admin-list').innerHTML = '<p class="empty-row">Erro ao carregar depoimentos.</p>';
+      }
+    }
+
+    function renderDepoimentosAdmin() {
+      const list = depoFilter === 'todos'
+        ? allDepoimentos
+        : allDepoimentos.filter(d => d.status === depoFilter);
+
+      const el = document.getElementById('depo-admin-list');
+      if (!list.length) {
+        el.innerHTML = `<p class="empty-row">Nenhum depoimento ${depoFilter === 'todos' ? '' : '"' + depoFilter + '"'} encontrado.</p>`;
+        return;
+      }
+
+      el.innerHTML = list.map(d => {
+        const stars = '★'.repeat(d.rating || 5) + '☆'.repeat(5 - (d.rating || 5));
+        const badgeClass = d.status === 'aprovado' ? 'badge-green' : d.status === 'rejeitado' ? 'badge-red' : 'badge-gold';
+        const badgeLabel = d.status === 'aprovado' ? 'Aprovado' : d.status === 'rejeitado' ? 'Rejeitado' : 'Pendente';
+        const fotoHtml = d.foto
+          ? `<img src="${d.foto}" alt="Foto" class="depo-admin-foto">`
+          : '';
+        return `
+          <div class="depo-admin-card" data-id="${d.id}">
+            <div class="depo-admin-card-top">
+              <div class="depo-admin-info">
+                ${fotoHtml}
+                <div>
+                  <strong>${d.nome}</strong>
+                  ${d.servico ? `<small>📌 ${d.servico}</small>` : ''}
+                  <div class="depo-admin-stars">${stars}</div>
+                </div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeLabel}</span>
+            </div>
+            <p class="depo-admin-texto">"${d.texto}"</p>
+            <div class="depo-admin-actions">
+              ${d.status !== 'aprovado'   ? `<button class="btn-sm btn-green"  onclick="setDepoStatus(${d.id},'aprovado')">✅ Aprovar</button>` : ''}
+              ${d.status !== 'rejeitado'  ? `<button class="btn-sm btn-red"    onclick="setDepoStatus(${d.id},'rejeitado')">❌ Rejeitar</button>` : ''}
+              ${d.status !== 'pendente'   ? `<button class="btn-sm btn-ghost"   onclick="setDepoStatus(${d.id},'pendente')">⏳ Pendente</button>` : ''}
+              <button class="btn-sm btn-red" onclick="deleteDepo(${d.id})">🗑️ Excluir</button>
+            </div>
+          </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    async function setDepoStatus(id, status) {
+      try {
+        await apiFetch(`/api/admin/depoimentos/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+        showToast(`Depoimento ${status}!`);
+        await loadDepoimentos();
+      } catch { showToast('Erro ao atualizar depoimento.'); }
+    }
+
+    async function deleteDepo(id) {
+      if (!confirm('Excluir este depoimento permanentemente?')) return;
+      try {
+        await apiFetch(`/api/admin/depoimentos/${id}`, { method: 'DELETE' });
+        showToast('Depoimento excluído!');
+        await loadDepoimentos();
+      } catch { showToast('Erro ao excluir.'); }
+    }
+
+    // Filtros de status
+    document.querySelectorAll('.depo-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.depo-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        depoFilter = btn.dataset.filter;
+        renderDepoimentosAdmin();
+      });
     });
 
     // ── Configurações Pix & Perfil ────────────────────────────────────────

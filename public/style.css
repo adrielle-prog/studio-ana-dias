@@ -1695,3 +1695,265 @@ input:focus, select:focus, textarea:focus {
     display: none; /* remove em telas pequenas */
   }
 }
+
+/* ── Seção Depoimentos ───────────────────────────────────── */
+.depo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.depo-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 2rem;
+}
+
+.depo-card {
+  background: rgba(22, 14, 30, 0.7);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.depo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(157, 78, 221, 0.15);
+}
+
+.depo-card-foto {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.depo-card-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.depo-card:hover .depo-card-foto img {
+  transform: scale(1.05);
+}
+
+.depo-card-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.depo-card-stars {
+  color: #f4b942;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+}
+
+.depo-card-texto {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  font-style: italic;
+  flex: 1;
+}
+
+.depo-card-author {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.depo-card-author strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.depo-card-author small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.depo-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ── Formulário de Depoimento ────────────────────────────── */
+.depo-form-wrapper {
+  background: rgba(22, 14, 30, 0.7);
+  border: 1px solid rgba(157, 78, 221, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.depo-form-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.depo-form-header i {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(157,78,221,0.25), rgba(255,71,126,0.15));
+  border: 1px solid rgba(157,78,221,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple);
+  flex-shrink: 0;
+}
+
+.depo-form-header h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.depo-form-header p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.depo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.depo-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.star-rating-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.star-rating-group span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.star-rating {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.star-rating button {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: rgba(255,255,255,0.15);
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s ease, transform 0.15s ease;
+  line-height: 1;
+}
+
+.star-rating button.active,
+.star-rating button.hover {
+  color: #f4b942;
+}
+
+.star-rating button:hover {
+  transform: scale(1.2);
+}
+
+/* Upload de foto */
+.depo-foto-area {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.depo-foto-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.depo-foto-label:hover {
+  border-color: var(--purple);
+  color: var(--text-primary);
+  background: rgba(157, 78, 221, 0.08);
+}
+
+.depo-foto-label i { width: 16px; height: 16px; }
+
+.hidden-file { display: none; }
+
+.depo-foto-preview {
+  width: 60px; height: 60px;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid rgba(157, 78, 221, 0.4);
+}
+
+.full-w { width: 100%; }
+
+.depo-msg {
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.depo-msg.success {
+  background: rgba(0, 229, 196, 0.1);
+  border: 1px solid rgba(0, 229, 196, 0.3);
+  color: var(--green);
+}
+
+.depo-msg.error {
+  background: rgba(255, 92, 92, 0.1);
+  border: 1px solid rgba(255, 92, 92, 0.3);
+  color: var(--red);
+}
+
+@media (max-width: 640px) {
+  .depo-form-row { grid-template-columns: 1fr; }
+  .depo-grid { grid-template-columns: 1fr; }
+}

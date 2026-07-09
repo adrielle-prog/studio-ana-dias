@@ -175,6 +175,77 @@ app.post('/api/admin/profile', authenticateAdmin, async (req, res) => {
   }
 });
 
+// ── Depoimentos ───────────────────────────────────────────────────────────────
+
+// Público: listar depoimentos aprovados
+app.get('/api/depoimentos', async (req, res) => {
+  try {
+    const depoimentos = await db.getDepoimentosAprovados();
+    res.json(depoimentos);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar depoimentos.' });
+  }
+});
+
+// Público: enviar novo depoimento (vai para moderação)
+app.post('/api/depoimentos', async (req, res) => {
+  const { nome, servico, texto, foto, rating } = req.body;
+  if (!nome || !texto) {
+    return res.status(400).json({ error: 'Nome e depoimento são obrigatórios.' });
+  }
+  if (texto.length < 10) {
+    return res.status(400).json({ error: 'O depoimento deve ter pelo menos 10 caracteres.' });
+  }
+  // Limitar tamanho da foto Base64 (~2MB)
+  if (foto && foto.length > 2_500_000) {
+    return res.status(400).json({ error: 'A foto deve ter no máximo 2MB.' });
+  }
+  try {
+    await db.createDepoimento(nome.trim(), servico?.trim() || null, texto.trim(), foto || null, Number(rating) || 5);
+    await db.addLog('info', `[Depoimento] Novo depoimento de "${nome}" aguardando aprovação.`);
+    res.status(201).json({ success: true, message: 'Depoimento enviado! Será publicado após aprovação. 🌸' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao salvar depoimento.' });
+  }
+});
+
+// Admin: listar todos os depoimentos
+app.get('/api/admin/depoimentos', authenticateAdmin, async (req, res) => {
+  try {
+    const depoimentos = await db.getAllDepoimentos();
+    res.json(depoimentos);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar depoimentos.' });
+  }
+});
+
+// Admin: aprovar ou rejeitar depoimento
+app.patch('/api/admin/depoimentos/:id', authenticateAdmin, async (req, res) => {
+  const { status } = req.body;
+  if (!['aprovado', 'rejeitado', 'pendente'].includes(status)) {
+    return res.status(400).json({ error: 'Status inválido.' });
+  }
+  try {
+    await db.updateDepoimentoStatus(req.params.id, status);
+    await db.addLog('info', `[Depoimento] ID #${req.params.id} marcado como "${status}".`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao atualizar depoimento.' });
+  }
+});
+
+// Admin: deletar depoimento
+app.delete('/api/admin/depoimentos/:id', authenticateAdmin, async (req, res) => {
+  try {
+    await db.deleteDepoimento(req.params.id);
+    await db.addLog('info', `[Depoimento] ID #${req.params.id} excluído.`);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao excluir depoimento.' });
+  }
+});
+
 // ── Endpoint público: Configurações Pix ──────────────────────────────────────
 app.get('/api/pix', async (req, res) => {
   try {
